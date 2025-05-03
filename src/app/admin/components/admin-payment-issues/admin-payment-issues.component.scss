@@ -3,6 +3,12 @@ $border-color: #dee2e6;
 $text-color-muted: #6c757d;
 $text-color-dark: #343a40;
 $link-color: #007bff;
+$danger-color: #dc3545; // Failed
+$warning-color: #ffc107; // Pending Action
+$info-color: #17a2b8;   // Disputed
+$success-color: #28a745; // Resolve button
+$primary-color: #6c757d; // Retry/Refund button (örnek)
+$header-bg: #f8f9fa;
 
 .admin-page-container {
   background-color: #fff;
@@ -18,36 +24,122 @@ $link-color: #007bff;
   }
 
   .back-button {
-    background: none;
-    border: none;
-    color: $link-color;
-    cursor: pointer;
-    margin-bottom: 1.5rem;
-    display: inline-block;
+    background: none; border: none; color: $link-color;
+    cursor: pointer; margin-bottom: 1.5rem; display: inline-block;
     font-size: 0.9em;
     &:hover { text-decoration: underline; }
   }
+}
 
-  .content-placeholder {
+.loading-indicator, .error-message, .no-issues {
     text-align: center;
+    padding: 1.5rem;
     color: $text-color-muted;
-    padding: 2rem 1rem;
-    border: 1px dashed $border-color;
-    border-radius: 5px;
-    background-color: #f8f9fa;
+ }
+.error-message {
+    color: $danger-color;
+    border: 1px solid lighten($danger-color, 30%);
+    background-color: lighten($danger-color, 40%);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    &.general-error { /* Genel hata için ek stil gerekirse */ }
+}
+.no-issues { font-style: italic; }
 
-    ul {
-      list-style: disc;
-      display: inline-block;
-      text-align: left;
-      margin: 1rem 0;
-      padding-left: 2rem; /* Madde işaretleri için boşluk */
-    }
-    li {
-      margin-bottom: 0.5rem;
-    }
-    p {
-      margin-bottom: 0.5rem;
-    }
+.issues-table-container {
+    overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle;
   }
+
+  th {
+    font-weight: 600;
+    background-color: $header-bg;
+    color: #495057;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1;
+  }
+
+   td {
+      a { // Linkler
+          color: $link-color;
+          text-decoration: none;
+          &:hover { text-decoration: underline;}
+      }
+      &.error-details { // Hata mesajı sütunu
+          max-width: 250px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          font-size: 0.85em;
+          color: $text-color-muted;
+      }
+   }
+
+  // Durum Badge Stilleri
+  .status-badge {
+      padding: 0.25em 0.6em;
+      font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 10px;
+      color: white;
+      text-transform: uppercase;
+      white-space: nowrap;
+
+      // Renkleri PaymentStatus'a göre ayarla
+      &.status-failed { background-color: $danger-color; }
+      &.status-pending { background-color: $warning-color; color: #333; } // pending_action için
+      &.status-disputed { background-color: $info-color; }
+      // ... diğer durumlar
+  }
+
+  // Aksiyon Butonları
+  .actions {
+      white-space: nowrap;
+      button {
+          font-size: 0.85em;
+          padding: 0.4rem 0.8rem;
+          margin-right: 0.5rem;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          color: white;
+          font-weight: 500;
+          line-height: 1; // İkonların hizalanması için
+          vertical-align: middle;
+          &:last-child { margin-right: 0;}
+          &:disabled { opacity: 0.6; cursor: not-allowed;}
+      }
+      .resolve-btn {
+          background-color: $success-color;
+          &:hover:not(:disabled){ background-color: darken($success-color, 10%); }
+      }
+      .retry-btn, .refund-btn { // Örnek stiller
+          background-color: $primary-color;
+          font-size: 1.1em; // İkon butonları biraz büyük olabilir
+          padding: 0.3rem;
+           &:hover:not(:disabled){ background-color: darken($primary-color, 10%); }
+      }
+       .retry-btn { color: white;} // İkon rengi
+       .refund-btn { color: white;} // İkon rengi
+  }
+}
+
+// Placeholder content stili (Gerekirse)
+.content-placeholder {
+  // admin-complaints.component.scss'ten kopyalanabilir veya ortak bir stile taşınabilir
 }

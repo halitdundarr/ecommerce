@@ -1,11 +1,55 @@
 <div class="user-transactions-container">
-  <h3>{{ userName }} - İşlem Geçmişi (Siparişler)</h3>
+  <h3>
+    <span *ngIf="user">{{ user.firstName }} {{ user.lastName }}</span>
+    <span *ngIf="!user && userId">Kullanıcı #{{ userId }}</span>
+     - İşlem Geçmişi (Siparişler)
+  </h3>
   <button routerLink="/admin/users" class="back-button">&larr; Kullanıcı Listesine Dön</button>
 
   <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
   <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
 
-  <div *ngIf="!isLoading && !error">
-    <p><i>Kullanıcının sipariş listesi burada gösterilecek...</i></p>
-    </div>
+  <ng-container *ngIf="!isLoading && !error">
+    <ng-container *ngIf="(orders$ | async) as orders; else loadErrorOrEmptyOrders">
+      <div *ngIf="orders.length > 0; else noOrders" class="order-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Sipariş No</th>
+              <th>Tarih</th>
+              <th>Tutar</th>
+              <th>Durum</th>
+              <th>Aksiyonlar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td>#{{ order.id }}</td>
+              <td>{{ order.orderDate | date:'dd.MM.yyyy HH:mm' }}</td>
+              <td>{{ order.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td class="actions">
+                <button class="action-btn view-btn"
+                        (click)="viewOrderDetails(order.id)"
+                        title="Sipariş Detayını Gör">
+                  👁️
+                </button>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmptyOrders>
+    </ng-template>
+  <ng-template #noOrders>
+    <p class="no-orders" *ngIf="!isLoading && !error">Bu kullanıcının siparişi bulunmamaktadır.</p>
+  </ng-template>
+
 </div>

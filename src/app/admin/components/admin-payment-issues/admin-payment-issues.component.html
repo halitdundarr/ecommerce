@@ -2,14 +2,85 @@
   <h3>Ödeme Sorunları Yönetimi</h3>
   <button routerLink="/admin/dashboard" class="back-button">&larr; Kontrol Paneline Dön</button>
 
-  <div class="content-placeholder">
-    <p>Bu bölümde, sistemdeki başarısız, askıda kalmış veya manuel müdahale gerektiren ödeme işlemleri listelenecektir.</p>
-    <ul>
-      <li>Başarısız Stripe/PayPal ödemeleri</li>
-      <li>Geri ödeme (refund) sorunları</li>
-      <li>Şüpheli işlem işaretlemeleri</li>
-    </ul>
-    <p>Adminler buradan sorunları inceleyip çözüm adımları uygulayabilecektir.</p>
-    <p><i>(Detaylı arayüz ve işlevsellik entegrasyon sonrası eklenecektir.)</i></p>
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message general-error">{{ error }}</div>
+
+  <ng-container *ngIf="(paymentIssues$ | async) as issues; else loadErrorOrEmpty">
+    <div *ngIf="issues.length > 0; else noIssues" class="issues-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Sipariş ID</th>
+            <th>Kullanıcı ID</th>
+            <th>Tutar</th>
+            <th>Yöntem</th>
+            <th>Durum</th>
+            <th>Hata Mesajı</th>
+            <th>Tarih</th>
+            <th>Aksiyonlar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let issue of issues">
+            <td>{{ issue.id }}</td>
+            <td>
+              <a *ngIf="issue.orderId" [routerLink]="['/admin/orders']" [queryParams]="{orderId: issue.orderId}" title="Siparişi Gör">
+                {{ issue.orderId }}
+              </a>
+              <span *ngIf="!issue.orderId">-</span>
+            </td>
+            <td>
+              <a *ngIf="issue.userId" [routerLink]="['/admin/users']" [queryParams]="{userId: issue.userId}" title="Kullanıcıyı Gör">
+                {{ issue.userId }}
+              </a>
+              <span *ngIf="!issue.userId">-</span>
+            </td>
+            <td>{{ (issue.amount ?? 0) | currency:(issue.currency || 'TRY'):'symbol':'1.2-2' }}</td>
+            <td>{{ issue.paymentMethod || 'Bilinmiyor' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(issue.status)">
+                {{ issue.status }}
+              </span>
+            </td>
+            <td class="error-details" [title]="issue.errorMessage">{{ issue.errorMessage | slice:0:50 }}{{ (issue.errorMessage?.length ?? 0) > 50 ? '...' : '' }}</td>
+            <td>{{ issue.createdAt | date:'dd.MM.yyyy HH:mm' }}</td>
+            <td class="actions">
+              <button class="action-btn resolve-btn"
+                      *ngIf="issue.status !== 'COMPLETED' && issue.status !== 'REFUNDED'"
+                      (click)="resolveIssue(issue.id)"
+                      [disabled]="actionLoading[issue.id]"
+                      title="Çözüldü İşaretle">
+                {{ actionLoading[issue.id] ? '...' : 'Çöz' }} ✅
+              </button>
+              <button class="action-btn retry-btn"
+                      *ngIf="issue.status === 'FAILED'"
+                      (click)="retryPayment(issue.id)"
+                      [disabled]="actionLoading[issue.id]"
+                      title="Tekrar Dene">
+                 🔁
+              </button>
+              <button class="action-btn refund-btn"
+                      *ngIf="issue.status === 'COMPLETED' || issue.status === 'DISPUTED'"
+                      (click)="refundPayment(issue.id, issue.orderId)"
+                      [disabled]="actionLoading[issue.id]"
+                      title="İade Et">
+                 ↩️
+              </button>
+               </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+    <div *ngIf="!isLoading && !error">
+      <ng-container *ngTemplateOutlet="noIssues"></ng-container>
+    </div>
+  </ng-template>
+  <ng-template #noIssues>
+    <p class="no-issues">Gösterilecek ödeme sorunu bulunamadı.</p>
+  </ng-template>
+
 </div>

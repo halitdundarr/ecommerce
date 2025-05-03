@@ -23,6 +23,24 @@ export class AuthService {
   private loggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.loggedInSubject.asObservable();
 
+
+    // === Mock Kullanıcı Bilgileri ===
+    private mockUsers: { [key: string]: { user: UserSummary, fakeTokenPayload: any } } = {
+      'admin@test.com': {
+        user: { id: 1, username: 'admin@test.com', firstName: 'Admin', lastName: 'User', email: 'admin@test.com', role: 'ADMIN', status: 'Active' },
+        fakeTokenPayload: { userId: 1, sub: 'admin@test.com', firstName: 'Admin', lastName: 'User', email: 'admin@test.com', role: 'ADMIN', status: 'Active' } // decodeToken'ın beklediği alanlar
+      },
+      'seller@test.com': {
+        user: { id: 2, username: 'seller@test.com', firstName: 'Seller', lastName: 'User', email: 'seller@test.com', role: 'SELLER', status: 'Active' },
+        fakeTokenPayload: { userId: 2, sub: 'seller@test.com', firstName: 'Seller', lastName: 'User', email: 'seller@test.com', role: 'SELLER', status: 'Active' }
+      },
+      'buyer@test.com': {
+        user: { id: 3, username: 'buyer@test.com', firstName: 'Buyer', lastName: 'User', email: 'buyer@test.com', role: 'CUSTOMER', status: 'Active' },
+        fakeTokenPayload: { userId: 3, sub: 'buyer@test.com', firstName: 'Buyer', lastName: 'User', email: 'buyer@test.com', role: 'CUSTOMER', status: 'Active' }
+      }
+      // İhtiyaç duydukça başka mock kullanıcılar eklenebilir
+    };
+
   constructor(
     private http: HttpClient,
     private router: Router,
@@ -98,15 +116,34 @@ export class AuthService {
    * Login isteği yapar ve başarılı olursa state'i günceller.
    */
   login(loginRequest: LoginRequest): Observable<LoginResponse> {
-    const loginUrl = `${this.AUTH_API_URL}/login`; // login endpoint'i
-    console.log(`Attempting login to: ${loginUrl} for user: ${loginRequest.username}`);
+    const loginUrl = `${this.AUTH_API_URL}/login`;
+    const username = loginRequest.username.toLowerCase(); // Küçük harfe çevirerek kontrol et
 
-    // Backend String döndüğü için responseType: 'text' olarak belirtiyoruz.
+    // Mock kullanıcı kontrolü
+    if (this.mockUsers[username]) {
+      console.warn(`Performing MOCK login for user: ${username}`);
+      const mockData = this.mockUsers[username];
+
+      // Sahte token oluştur (basit base64 encode edilmiş payload)
+      // Header ve signature kısmı olmadan sadece payload'ı kodluyoruz.
+      const fakeTokenPayloadString = JSON.stringify(mockData.fakeTokenPayload);
+      const fakeToken = `fakeHeader.${btoa(fakeTokenPayloadString)}.fakeSignature`; // Basit base64 encode
+
+      this.setAuthState(fakeToken, mockData.user); // Auth state'i ayarla
+
+      // Mock LoginResponse döndür
+      const mockResponse: LoginResponse = { token: fakeToken };
+      return of(mockResponse).pipe(
+        tap(() => console.log(`Mock login successful for ${username}`))
+      ); // Observable<LoginResponse> döndür
+    }
+
+    // Mock kullanıcı değilse, normal API çağrısı yap
+    console.log(`Attempting REAL login to: ${loginUrl} for user: ${loginRequest.username}`);
     return this.http.post(loginUrl, loginRequest, { responseType: 'text' })
       .pipe(
         map(tokenString => {
-          // Gelen string token'ı LoginResponse formatına çeviriyoruz
-           console.log("Raw token string received:", tokenString); // Token'ı logla
+           console.log("Raw token string received:", tokenString);
           if (!tokenString) {
               throw new Error('Login failed: No token received from backend.');
           }
@@ -115,24 +152,22 @@ export class AuthService {
         }),
         tap(response => {
           if (response && response.token) {
-              // Token'ı decode edip kullanıcı bilgilerini alıyoruz
               const user = this.decodeToken(response.token);
                if (!user) {
                    console.error("Failed to decode token or extract user information.");
-                   // Hata fırlatmak veya state'i temizlemek gerekebilir
                    this.setAuthState(null, null);
                    throw new Error('Login failed: Could not decode token or extract user info.');
                }
                console.log("Decoded user from token:", user);
-              this.setAuthState(response.token, user); // State'i ve localStorage'ı güncelle
+              this.setAuthState(response.token, user);
               console.log('Login successful, auth state updated.');
           } else {
-              this.setAuthState(null, null); // Token yoksa state'i temizle
+              this.setAuthState(null, null);
               console.error('Login response missing token.');
               throw new Error('Login response did not contain a token.');
           }
         }),
-        catchError(this.handleError) // Merkezi hata yönetimi
+        catchError(this.handleError)
       );
   }
 
@@ -183,51 +218,48 @@ export class AuthService {
    * JWT'yi decode edip UserSummary nesnesine dönüştürür.
    * DİKKAT: Backend'in JWT içine gerekli bilgileri (id, firstName, lastName, email, role) eklediğinden emin olun!
    */
-   private decodeToken(token: string): UserSummary | null {
-       if (!token) {
-           return null;
-       }
-       try {
-           const payloadBase64 = token.split('.')[1];
-           if (!payloadBase64) {
-               console.error('Invalid token structure: Missing payload.');
-               return null;
-           }
-           const payloadJson = atob(payloadBase64);
-           const payload = JSON.parse(payloadJson);
+  // === decodeToken Metodu (Sahte token'ı da çözebilecek şekilde güncellendi) ===
+  private decodeToken(token: string): UserSummary | null {
+    if (!token) {
+        return null;
+    }
+    try {
+        const payloadBase64 = token.split('.')[1]; // Payload kısmı (header ve signature'ı önemsemiyoruz)
+        if (!payloadBase64) {
+            console.error('Invalid token structure: Missing payload.');
+            return null;
+        }
+        const payloadJson = atob(payloadBase64); // Base64 çöz
+        const payload = JSON.parse(payloadJson);
 
-            // === ÖNEMLİ: Backend JWT Payload Kontrolü ===
-            // Backend JWTService'inizin bu alanları token'a eklediğinden emin olun.
-            // Payload'ı loglayarak kontrol edebilirsiniz:
-            console.log("Decoded JWT Payload:", payload);
+         console.log("Decoded JWT Payload:", payload);
 
-            // UserSummary'yi oluştur
-           const user: UserSummary = {
-               id: payload.userId || payload.sub, // 'sub' (subject) genellikle kullanıcı ID'sidir
-               username: payload.username || payload.sub, // 'username' claim'i varsa kullan
-               firstName: payload.firstName || '', // 'firstName' claim'i varsa kullan
-               lastName: payload.lastName || '', // 'lastName' claim'i varsa kullan
-               email: payload.email || '', // 'email' claim'i varsa kullan
-               // 'role' claim'ini alırken 'ROLE_' prefix'ini kaldırın (varsa)
-               role: (payload.role || 'CUSTOMER').replace('ROLE_', ''),
-               status: payload.status || 'Active' // Varsayılan status
-           };
+        // UserSummary'yi oluştur (Mock payload veya gerçek JWT payload'dan)
+        const user: UserSummary = {
+            id: payload.userId || payload.sub, // 'sub' genellikle ID'dir
+            username: payload.username || payload.sub || payload.email, // username, sub veya email kullan
+            firstName: payload.firstName || '',
+            lastName: payload.lastName || '',
+            email: payload.email || '',
+            role: (payload.role || 'CUSTOMER').replace('ROLE_', ''), // Rolü al ve prefix'i temizle
+            status: payload.status || 'Active' // Durumu al veya varsayılan ata
+        };
 
-           // Gerekli alanlar var mı kontrolü (en azından ID ve rol)
-           if (!user.id || !user.role) {
-               console.error('Decoded token is missing required claims (userId/sub or role).');
-               return null;
-           }
+        // Gerekli alanlar var mı kontrolü
+        if (!user.id || !user.role) {
+            console.error('Decoded token is missing required claims (userId/sub or role).');
+            return null;
+        }
 
-           return user;
-       } catch (e) {
-           console.error('Error decoding token:', e);
-           if (!isPlatformBrowser(this.platformId)) {
-              console.warn('atob function might not be available on the server.');
-           }
-           return null;
-       }
-   }
+        return user;
+    } catch (e) {
+        console.error('Error decoding token:', e);
+        if (!isPlatformBrowser(this.platformId)) {
+           console.warn('atob function might not be available on the server.');
+        }
+        return null;
+    }
+  }
 
   /**
    * Anlık kullanıcı bilgisini döndürür.

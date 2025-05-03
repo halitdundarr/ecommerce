@@ -1,4 +1,18 @@
-// Stil değişkenleri...
+// Gerekli değişkenler
+$border-color: #dee2e6;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$primary-color: #007bff;
+$link-color: #007bff;
+$header-bg: #f8f9fa;
+// Durum renkleri (order-management.scss'ten)
+$status-delivered: #28a745;
+$status-shipped: #17a2b8;
+$status-processing: #ffc107;
+$status-cancelled: #dc3545;
+$status-pending: #6c757d;
+
+
 .user-transactions-container {
   background-color: #fff;
   padding: 1.5rem;
@@ -8,12 +22,13 @@
   h3 {
     margin-top: 0;
     margin-bottom: 1rem;
+    font-weight: 500;
   }
 
   .back-button {
     background: none;
     border: none;
-    color: #007bff; // Link rengi
+    color: $link-color;
     cursor: pointer;
     margin-bottom: 1.5rem;
     display: inline-block;
@@ -21,10 +36,71 @@
     &:hover { text-decoration: underline; }
   }
 
-  .error-message { /* ... */ }
-
-  // Tablo stilleri (order-management.component.scss'ten kopyalanabilir)
-  table { /* ... */ }
-  th, td { /* ... */ }
-  .status-badge { /* ... */ }
+  .error-message {
+      color: $danger-color;
+      text-align: center;
+      padding: 1rem;
+      // Diğer stiller...
+  }
+   .no-orders {
+       text-align: center;
+       padding: 1.5rem;
+       color: $text-color-muted;
+       font-style: italic;
+   }
 }
+
+// Tablo stilleri (order-management.scss ile benzer)
+.order-table-container {
+    overflow-x: auto;
+}
+
+ table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: $header-bg;
+    color: #495057;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1;
+  }
+
+  // Durum Badge Stilleri
+  .status-badge {
+      padding: 0.25em 0.6em; font-size: 0.8em; font-weight: bold;
+      border-radius: 10px; color: white; text-transform: uppercase;
+      white-space: nowrap;
+      &.status-delivered { background-color: $status-delivered; }
+      &.status-shipped { background-color: $status-shipped; }
+      &.status-processing { background-color: $status-processing; color: #333; }
+      &.status-cancelled { background-color: $status-cancelled; }
+      &.status-pending { background-color: $status-pending; }
+  }
+
+  // Aksiyon Butonları
+  .actions {
+      white-space: nowrap;
+      button {
+          font-size: 1.1em; padding: 0.3rem; margin-right: 0.5rem;
+          border: none; border-radius: 3px; cursor: pointer;
+          background: none; line-height: 1; vertical-align: middle;
+          &:last-child { margin-right: 0;}
+          &:disabled { opacity: 0.5; cursor: not-allowed; }
+      }
+      .view-btn { color: $primary-color; &:hover:not(:disabled){color: darken($primary-color, 15%);}}
+  }
+ }

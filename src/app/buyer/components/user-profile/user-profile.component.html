@@ -7,28 +7,30 @@
       <nav>
         <ul>
           <li><a routerLink="./" routerLinkActive="active-section" [routerLinkActiveOptions]="{exact: true}">Profil Bilgileri</a></li>
-          <li><a routerLink="addresses" routerLinkActive="active-section">Adreslerim</a></li>
-          <li><a routerLink="/buyer/orders">Siparişlerim</a></li>
-          <li><a routerLink="/buyer/wishlist">İstek Listem</a></li>
-          <li><a routerLink="/buyer/returns">İade Taleplerim</a></li>
-        </ul>
+          <li><a routerLink="/buyer/orders" routerLinkActive="active-section">Siparişlerim</a></li>
+          <li><a routerLink="/buyer/wishlist" routerLinkActive="active-section">İstek Listem</a></li>
+          <li><a routerLink="/buyer/returns" routerLinkActive="active-section">İade Taleplerim</a></li>
+          </ul>
       </nav>
     </aside>
 
     <main class="profile-content">
 
       <section class="profile-section" id="profile-info">
-        <h4>Profil Bilgileri</h4>
-        <ng-container *ngIf="currentUser$ | async as user">
+        <div class="section-header">
+           <h4>Profil Bilgileri</h4>
+           <button class="edit-btn" (click)="editProfileInfo()">Düzenle</button>
+        </div>
+        <ng-container *ngIf="currentUser$ | async as user; else loadingUser">
           <div class="user-info">
             <p><strong>Ad Soyad:</strong> {{ user.firstName }} {{ user.lastName }}</p>
             <p><strong>E-posta:</strong> {{ user.email }}</p>
             <p><strong>Kullanıcı Tipi:</strong> {{ user.role }}</p>
             </div>
-          <div *ngIf="!user">
-             Kullanıcı bilgileri yükleniyor...
-          </div>
         </ng-container>
+         <ng-template #loadingUser>
+             <app-loading-spinner *ngIf="!(currentUser$ | async)"></app-loading-spinner>
+             </ng-template>
       </section>
 
       <section class="profile-section" id="addresses">
@@ -39,41 +41,44 @@
           {{ addressError }}
         </div>
 
-        <div class="address-list" *ngIf="(addresses$ | async) as addresses">
+        <div class="address-list" *ngIf="(addresses$ | async) as addresses; else loadingAddr">
           <div *ngIf="addresses.length > 0; else noAddresses">
             <div *ngFor="let address of addresses" class="address-card">
               <div class="address-details">
-                <strong>{{ address.addressTitle }} <span *ngIf="address.isDefault" class="default-badge">Varsayılan</span></strong>
+                <strong>
+                  {{ address.addressTitle }}
+                  <span *ngIf="address.isDefault" class="default-badge">Varsayılan</span>
+                </strong>
                 {{ address.firstName }} {{ address.lastName }} <br>
                 {{ address.street }} <br>
                 {{ address.postalCode }} {{ address.city }} / {{ address.country }} <br>
                 Tel: {{ address.phoneNumber }}
               </div>
               <div class="address-actions">
-                <button (click)="editAddress(address)" title="Düzenle" [disabled]="!!actionLoading[address.id!]">✏️</button>
-                <button (click)="deleteAddress(address.id)" title="Sil" [disabled]="actionLoading[address.id!] === 'delete'">
+                 <button (click)="editAddress(address)" title="Düzenle" [disabled]="!!actionLoading[address.id!]">✏️</button>
+                 <button (click)="deleteAddress(address.id)" title="Sil" [disabled]="actionLoading[address.id!] === 'delete'" class="delete-btn">
                    <span *ngIf="actionLoading[address.id!] !== 'delete'">🗑️</span>
-                   <span *ngIf="actionLoading[address.id!] === 'delete'">...</span> </button>
-                <button *ngIf="!address.isDefault" (click)="makeDefaultAddress(address.id)" title="Varsayılan Yap" class="default-btn" [disabled]="actionLoading[address.id!] === 'default'">
-                   <span *ngIf="actionLoading[address.id!] !== 'default'">Varsayılan Yap</span>
-                   <span *ngIf="actionLoading[address.id!] === 'default'">...</span> </button>
+                   <span *ngIf="actionLoading[address.id!] === 'delete'">...</span>
+                </button>
+                 <button *ngIf="!address.isDefault" (click)="makeDefaultAddress(address.id)" title="Varsayılan Yap" class="default-btn" [disabled]="actionLoading[address.id!] === 'default'">
+                   <span *ngIf="actionLoading[address.id!] !== 'default'">⭐ Varsayılan Yap</span>
+                   <span *ngIf="actionLoading[address.id!] === 'default'">...</span>
+                </button>
               </div>
-            </div>
-          </div>
+            </div></div>
           <ng-template #noAddresses>
             <p *ngIf="!isLoadingAddresses">Kayıtlı adresiniz bulunmamaktadır.</p>
           </ng-template>
         </div>
-
-        <div class="new-address-toggle">
+        <ng-template #loadingAddr></ng-template> <div class="new-address-toggle">
             <button type="button" class="add-address-btn" (click)="toggleNewAddressForm()" *ngIf="!showNewAddressForm">
                 <i class="icon-plus">➕</i> Yeni Adres Ekle
             </button>
         </div>
 
         <div *ngIf="showNewAddressForm" class="new-address-form-container">
-            <h5>{{ editingAddressId ? 'Adresi Düzenle' : 'Yeni Adres Ekle' }}</h5> <form [formGroup]="newAddressForm" (ngSubmit)="saveOrUpdateAddress()">
-
+            <h5>{{ editingAddressId ? 'Adresi Düzenle' : 'Yeni Adres Ekle' }}</h5>
+             <form [formGroup]="newAddressForm" (ngSubmit)="saveOrUpdateAddress()">
                 <div class="form-group">
                     <label for="na-title">Adres Başlığı*</label>
                     <input type="text" id="na-title" formControlName="addressTitle" placeholder="Ev Adresim, İş Adresim vb."
@@ -82,7 +87,6 @@
                          Adres başlığı zorunludur.
                      </div>
                 </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label for="na-fname">Ad*</label>
@@ -101,8 +105,7 @@
                          </div>
                     </div>
                 </div>
-
-                 <div class="form-group">
+                <div class="form-group">
                     <label for="na-phone">Telefon Numarası*</label>
                     <input type="tel" id="na-phone" formControlName="phoneNumber" placeholder="5xxxxxxxxx"
                            [ngClass]="{'is-invalid': newAddressForm.get('phoneNumber')?.invalid && (newAddressForm.get('phoneNumber')?.dirty || newAddressForm.get('phoneNumber')?.touched)}">
@@ -110,7 +113,6 @@
                          Telefon numarası zorunludur.
                      </div>
                  </div>
-
                 <div class="form-group">
                     <label for="na-street">Adres Satırı*</label>
                     <input type="text" id="na-street" formControlName="street" placeholder="Mahalle, cadde, sokak, bina no, daire no"
@@ -119,8 +121,7 @@
                          Adres satırı zorunludur.
                      </div>
                 </div>
-
-                 <div class="form-row">
+                <div class="form-row">
                   <div class="form-group">
                     <label for="na-zip">Posta Kodu*</label>
                     <input type="text" id="na-zip" formControlName="postalCode"
@@ -161,4 +162,11 @@
                      </button>
                  </div>
             </form>
-        </div> </section> </main> </div> </div>
+        </div> </section> <section class="profile-section" id="security">
+          <div class="section-header">
+              <h4>Güvenlik</h4>
+          </div>
+          <button class="action-btn" (click)="changePassword()">Şifre Değiştir</button>
+       </section>
+
+    </main> </div> </div>

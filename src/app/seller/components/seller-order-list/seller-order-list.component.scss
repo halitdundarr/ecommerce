@@ -1,11 +1,16 @@
+// src/app/seller/components/seller-order-list/seller-order-list.component.scss
+
 // Gerekirse merkezi değişkenleri import edin: @use '../../../styles/variables' as *;
 // Veya değişkenleri burada tanımlayın:
 $border-color: #dee2e6;
 $text-color-muted: #6c757d;
 $danger-color: #dc3545;
-$primary-color: #007bff; // View Butonu
-$success-color: #28a745; // Ship Butonu için olabilir
-$link-color: #007bff;
+$primary-color: #007bff; // Link ve bazı butonlar için
+$success-color: #28a745; // Ship Butonu için
+$link-color: #007bff; // Sipariş ID linki için
+$header-bg: #f8f9fa; // Tablo başlığı arkaplanı
+
+// Sipariş Durum Renkleri (Admin/Buyer ile aynı)
 $status-delivered: #28a745;
 $status-shipped: #17a2b8;
 $status-processing: #ffc107;
@@ -22,6 +27,7 @@ $status-pending: #6c757d;
   h3 {
     margin-top: 0;
     margin-bottom: 1.5rem;
+    font-weight: 500; // Başlık kalınlığı
   }
 }
 
@@ -55,20 +61,43 @@ table {
 
   th {
     font-weight: 600;
-    background-color: #f8f9fa;
+    background-color: $header-bg;
     color: #495057;
     white-space: nowrap; // Başlıklar alt satıra düşmesin
   }
 
-  tbody tr:hover {
+  tbody tr.order-item-row:hover { // Sadece ürün satırları hover olsun
     background-color: #f1f1f1; // Satır üzerine gelince renk değişimi
   }
+
+  td {
+     // Sipariş ID Link Stili
+     .order-id-link {
+        color: $link-color;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none; // Alt çizgiyi kaldır
+        &:hover {
+            text-decoration: underline; // Üzerine gelince alt çizgi
+        }
+     }
+  }
+
 
   // Ürün Bilgisi Sütunu İçin Ek Stil
   .product-info {
       display: flex;
       align-items: center;
       gap: 0.8rem; // Resim ve yazı arası boşluk
+
+       // İade Durumu Stili (Product Info içinde)
+       small.return-status-info {
+           display: block; // Alt satıra al
+           font-size: 0.85em;
+           color: $text-color-muted;
+           font-style: italic;
+           margin-top: 3px;
+       }
   }
 
   // Küçük Ürün Resmi
@@ -89,34 +118,63 @@ table {
       font-weight: bold;
       border-radius: 10px;
       color: white;
-      text-transform: uppercase;
+      text-transform: uppercase; // Veya capitalize
       white-space: nowrap;
 
       &.status-delivered { background-color: $status-delivered; }
       &.status-shipped { background-color: $status-shipped; }
-      &.status-processing { background-color: $status-processing; color: #333; }
+      &.status-processing { background-color: $status-processing; color: #333; } // Sarı üzerine koyu yazı
       &.status-cancelled { background-color: $status-cancelled; }
       &.status-pending { background-color: $status-pending; }
   }
 
-  // Aksiyon Butonları
+  // Aksiyon Butonları ve Bilgiler
   .actions {
-      white-space: nowrap;
-      button {
-          font-size: 1.1em;
-          padding: 0.3rem;
-          margin-right: 0.5rem;
+      white-space: nowrap; // İçerik alt satıra düşmesin
+
+      // Kargola Butonu
+      button.action-btn.ship-btn {
+          font-size: 0.85em;
+          padding: 0.4rem 0.8rem;
           border: none;
           border-radius: 3px;
           cursor: pointer;
-          background: none;
-          line-height: 1;
+          background-color: $success-color; // Yeşil renk
+          color: white;
+          font-weight: 500;
+          transition: background-color 0.2s, opacity 0.2s;
+          line-height: 1.2;
           vertical-align: middle;
-          transition: color 0.2s;
-          &:last-child { margin-right: 0;}
+
+          &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+              background-color: #aaa;
+          }
+           &:hover:not(:disabled) {
+              background-color: darken($success-color, 10%);
+           }
+           // İkon ve metin arasına boşluk (gerekirse)
+           span + span { margin-left: 4px; }
       }
-      // İkon renkleri ve hover efektleri
-      .view-btn { color: $primary-color; &:hover{color: darken($primary-color, 15%);}}
-      .ship-btn { color: $success-color; &:hover{color: darken($success-color, 15%);}} // Kargoya ver butonu
+
+       // Kargo Bilgisi Stili (Aksiyonlar içinde)
+       .shipment-info-cell small {
+          font-size: 0.85em;
+          color: $text-color-muted;
+          display: block; // Alt alta sığmazsa
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 150px; // Genişliği sınırla
+          cursor: help; // Tooltip olduğunu belirtmek için
+          margin-top: 5px; // Butonla arasına boşluk
+       }
+
+       // Aksiyon yoksa gösterilecek tire (-)
+       span {
+           color: $text-color-muted;
+           font-size: 1.1em; // Butonlarla benzer boyutta
+       }
   }
-}
+} // table sonu

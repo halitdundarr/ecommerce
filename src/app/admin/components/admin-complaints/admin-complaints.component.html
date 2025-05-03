@@ -2,9 +2,71 @@
   <h3>Müşteri Destek / Şikayet Yönetimi</h3>
   <button routerLink="/admin/dashboard" class="back-button">&larr; Kontrol Paneline Dön</button>
 
-  <div class="content-placeholder">
-    <p>Bu bölümde, müşterilerden gelen destek talepleri, şikayetler veya geri bildirimler görüntülenecektir.</p>
-    <p>Adminler buradan taleplere yanıt verebilir, durumlarını güncelleyebilir ve çözüm süreçlerini takip edebilir.</p>
-    <p><i>(Detaylı arayüz ve işlevsellik entegrasyon sonrası eklenecektir.)</i></p>
-  </div>
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message general-error">{{ error }}</div>
+
+  <ng-container *ngIf="(supportTickets$ | async) as tickets; else loadErrorOrEmpty">
+    <div *ngIf="tickets.length > 0; else noTickets" class="tickets-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Kullanıcı</th>
+            <th>Konu</th>
+            <th>İlgili Sipariş/Ürün</th>
+            <th>Durum</th>
+            <th>Oluşturma Tarihi</th>
+            <th>Son Güncelleme</th>
+            <th>Aksiyonlar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let ticket of tickets">
+            <td>#{{ ticket.id }}</td>
+            <td>
+              {{ ticket.user?.firstName || 'Bilinmiyor' }} {{ ticket.user?.lastName || '' }}
+              <small *ngIf="ticket.userId"> (ID: {{ ticket.userId }})</small>
+            </td>
+            <td class="subject-cell" [title]="ticket.subject">{{ ticket.subject | slice:0:40 }}{{ ticket.subject.length > 40 ? '...' : ''}}</td>
+            <td>
+              <span *ngIf="ticket.relatedOrderId">Sipariş #{{ticket.relatedOrderId}}</span>
+              <span *ngIf="ticket.relatedProductId">Ürün #{{ticket.relatedProductId}}</span>
+              <span *ngIf="!ticket.relatedOrderId && !ticket.relatedProductId">-</span>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(ticket.status)">
+                {{ ticket.status }}
+              </span>
+            </td>
+            <td>{{ ticket.createdAt | date:'dd.MM.yyyy HH:mm' }}</td>
+            <td>{{ ticket.lastUpdatedAt ? (ticket.lastUpdatedAt | date:'dd.MM.yyyy HH:mm') : '-' }}</td>
+            <td class="actions">
+              <button class="action-btn view-btn"
+                      (click)="viewTicketDetails(ticket.id)"
+                      [disabled]="actionLoading[ticket.id]"
+                      title="Detayları Gör">
+                👁️
+              </button>
+              <button class="action-btn status-btn"
+                      (click)="updateTicketStatus(ticket.id, ticket.status)"
+                      [disabled]="actionLoading[ticket.id]"
+                      title="Durumu Güncelle">
+                 {{ actionLoading[ticket.id] ? '...' : '🔄' }}
+              </button>
+              </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+    <div *ngIf="!isLoading && !error">
+      <ng-container *ngTemplateOutlet="noTickets"></ng-container>
+    </div>
+  </ng-template>
+  <ng-template #noTickets>
+    <p class="no-tickets">Gösterilecek destek talebi veya şikayet bulunamadı.</p>
+  </ng-template>
+
 </div>

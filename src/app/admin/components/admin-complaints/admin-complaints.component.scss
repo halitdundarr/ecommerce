@@ -1,7 +1,18 @@
+// Stil değişkenleri
 $border-color: #dee2e6;
 $text-color-muted: #6c757d;
 $text-color-dark: #343a40;
 $link-color: #007bff;
+$danger-color: #dc3545;
+$header-bg: #f8f9fa;
+// Durum Renkleri (Örnek)
+$status-new-bg: #17a2b8; // Info Mavi
+$status-open-bg: #ffc107; // Warning Sarı
+$status-pending-bg: #6c757d; // Muted Gri
+$status-resolved-bg: #28a745; // Success Yeşil
+$status-closed-bg: #adb5bd; // Açık Gri
+$action-btn-color: #007bff; // Mavi (View)
+$status-btn-color: #ffc107; // Sarı (Status Update)
 
 .admin-page-container {
   background-color: #fff;
@@ -17,37 +28,113 @@ $link-color: #007bff;
   }
 
   .back-button {
-    background: none;
-    border: none;
-    color: $link-color;
-    cursor: pointer;
-    margin-bottom: 1.5rem;
-    display: inline-block;
+    background: none; border: none; color: $link-color;
+    cursor: pointer; margin-bottom: 1.5rem; display: inline-block;
     font-size: 0.9em;
     &:hover { text-decoration: underline; }
   }
+}
 
-  .content-placeholder {
+.loading-indicator, .error-message, .no-tickets {
+    text-align: center;
+    padding: 1.5rem;
+    color: $text-color-muted;
+ }
+.error-message {
+    color: $danger-color;
+    // Diğer stiller...
+}
+.no-tickets { font-style: italic; }
+
+
+.tickets-table-container {
+    overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: $header-bg;
+    color: #495057;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1;
+  }
+
+   td {
+      small { color: $text-color-muted; font-size: 0.9em; }
+      &.subject-cell { // Konu sütunu için
+          max-width: 300px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+      }
+   }
+
+  // Durum Badge Stilleri
+  .status-badge {
+      padding: 0.25em 0.6em;
+      font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 10px;
+      color: white;
+      text-transform: uppercase;
+      white-space: nowrap;
+      // Duruma göre renkler
+      &.status-new { background-color: $status-new-bg; }
+      &.status-open { background-color: $status-open-bg; color: #333; } // Sarı üzerine koyu yazı
+      &.status-pending { background-color: $status-pending-bg; }
+      &.status-resolved { background-color: $status-resolved-bg; }
+      &.status-closed { background-color: $status-closed-bg; color: #333; } // Açık gri üzerine koyu yazı
+  }
+
+  // Aksiyon Butonları
+  .actions {
+      white-space: nowrap;
+      button {
+          font-size: 1.1em; // İkonları büyüt
+          padding: 0.3rem;
+          margin-right: 0.5rem;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          background: none;
+          line-height: 1;
+          vertical-align: middle;
+          transition: color 0.2s;
+          &:last-child { margin-right: 0;}
+          &:disabled { opacity: 0.5; cursor: not-allowed; }
+      }
+      // İkon renkleri
+      .view-btn { color: $action-btn-color; &:hover:not(:disabled){color: darken($action-btn-color, 15%);}}
+      .status-btn { color: $status-btn-color; &:hover:not(:disabled){color: darken($status-btn-color, 15%);}}
+      // .reply-btn { color: #28a745; ... } // Yanıtla butonu için
+  }
+}
+
+// Placeholder content stili
+.content-placeholder {
     text-align: center;
     color: $text-color-muted;
     padding: 2rem 1rem;
     border: 1px dashed $border-color;
     border-radius: 5px;
     background-color: #f8f9fa;
-
-    ul {
-      list-style: disc;
-      display: inline-block;
-      text-align: left;
-      margin: 1rem 0;
-      padding-left: 2rem; /* Madde işaretleri için boşluk */
-    }
-    li {
-      margin-bottom: 0.5rem;
-    }
-    p {
-      margin-bottom: 0.5rem;
-    }
-  }
+    ul { list-style: disc; display: inline-block; text-align: left; margin: 1rem 0; padding-left: 2rem; }
+    li { margin-bottom: 0.5rem; }
+    p { margin-bottom: 0.5rem; }
 }
-

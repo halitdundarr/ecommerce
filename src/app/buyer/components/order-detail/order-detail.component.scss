@@ -1,44 +1,59 @@
+// src/app/buyer/components/order-detail/order-detail.component.scss
+
+// Gerekli Sass modüllerini import et (Modern fonksiyonlar için)
 @use 'sass:math';
 @use 'sass:color';
 
-// Değişkenler (OrderHistory'den veya global'den alınabilir)
+// Değişkenler (OrderHistory'den veya global'den alınabilir/uyarlanabilir)
 $border-color: #e0e0e0;
+$border-color-medium: #ddd; // Kargo olayları için
 $primary-color: #ff6000;
 $link-color: #007bff;
 $text-color-dark: #343a40;
 $text-color-muted: #6c757d;
+$danger-color: #dc3545; // İptal durumu ve hatalar için
+$return-button-bg: #ffc107; // İade butonu rengi (Sarı)
+$return-status-color: #6c757d; // İade durumu metin rengi
+$spacing-unit: 1rem;
+
+// Sipariş Durum Renkleri
 $status-delivered: #28a745;
 $status-shipped: #17a2b8;
 $status-processing: #ffc107;
 $status-cancelled: #dc3545;
-$danger-color: #dc3545;
 $status-pending: #6c757d; // OrderStatus PENDING ise
-$spacing-unit: 1rem;
-$return-button-bg: #ffc107; // İade butonu rengi
-$return-status-color: #6c757d; // İade durumu metin rengi
 
+// Kargo Takip Stilleri için Renkler
+$tracking-event-border: #e0e0e0;
+$tracking-timestamp-color: #6c757d;
+
+
+// Ana Kapsayıcı
 .order-detail-container {
-  max-width: 900px;
-  margin: 1.5rem auto;
-  padding: 1rem;
+  max-width: 900px; // İçerik genişliği
+  margin: 1.5rem auto; // Ortala ve boşluk
+  padding: $spacing-unit; // İç boşluk
 
+  // Geri Butonu
   .back-button {
       background: none;
       border: none;
       color: $link-color;
       cursor: pointer;
-      margin-bottom: 1rem;
+      margin-bottom: $spacing-unit;
       display: inline-block;
       font-size: 0.9em;
       &:hover { text-decoration: underline; }
   }
 
+  // Ana Başlık
   h2 {
     margin-bottom: 1.5rem;
     text-align: center;
     font-weight: 500;
   }
 
+  // Yüklenme ve Hata Mesajları
    .loading-indicator, .error-message {
       text-align: center;
       padding: 2rem;
@@ -58,95 +73,162 @@ $return-status-color: #6c757d; // İade durumu metin rengi
        background-color: #fff;
        border: 1px solid $border-color;
        border-radius: 8px;
-       margin-bottom: 1.5rem;
-       padding: 1.5rem;
-       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+       margin-bottom: 1.5rem; // Kartlar arası boşluk
+       padding: 1.5rem; // Kart iç boşluğu
+       box-shadow: 0 1px 3px rgba(0,0,0,0.05); // Hafif gölge
    }
 
-   // Sipariş Özeti Başlığı
+   // Sipariş Özeti Başlığı Bölümü
    .order-summary-header {
        display: flex;
-       justify-content: space-between;
-       flex-wrap: wrap;
-       gap: 1rem;
+       justify-content: space-between; // Elemanları aralıklı dağıt
+       flex-wrap: wrap; // Küçük ekranda alt alta
+       gap: $spacing-unit; // Elemanlar arası boşluk
        font-size: 0.95em;
        align-items: center; // Dikeyde ortala
 
-       div {
-           span { color: $text-color-muted; margin-right: 5px;}
-           strong { color: $text-color-dark; }
+       div { // Her bir bilgi bloğu
+           span { // Etiket (Sipariş No:, Durum:)
+              color: $text-color-muted;
+              margin-right: 5px;
+            }
+           strong { // Değer (12345, Teslim Edildi)
+              color: $text-color-dark;
+            }
 
            // Durum Badge stilleri
            strong[class*='status-'] {
                padding: 0.2rem 0.6rem;
-               border-radius: 15px;
+               border-radius: 15px; // Oval kenar
                font-size: 0.9em;
                color: white;
                vertical-align: middle; // Hizalamaya yardımcı
 
                &.status-delivered { background-color: $status-delivered; }
                &.status-shipped { background-color: $status-shipped; }
-               &.status-processing { background-color: $status-processing; color: #333; }
+               &.status-processing { background-color: $status-processing; color: #333; } // Sarı üzerine koyu yazı
                &.status-cancelled { background-color: $status-cancelled; }
                &.status-pending { background-color: $status-pending; }
            }
        }
-   }
+   } // .order-summary-header sonu
 
    // Kargo Bilgileri Bölümü
    .shipment-details {
-       h4 {
+       h4 { // Bölüm başlığı
           margin-top: 0;
           margin-bottom: 1rem;
           font-size: 1.1em;
           padding-bottom: 0.5rem;
           border-bottom: 1px solid $border-color;
         }
-        .shipment-info {
+        .shipment-info { // Temel kargo bilgileri
             font-size: 0.95em;
-            line-height: 1.7;
+            line-height: 1.7; // Satır aralığı
             p {
-                margin-bottom: 0.5rem;
+                margin-bottom: 0.5rem; // Paragraflar arası boşluk
                 strong { color: $text-color-dark; margin-right: 5px; }
             }
-            .tracking-link { // Opsiyonel takip linki stili
+            .tracking-link { // Kargo takip linki (varsa)
                 display: inline-block;
                 margin-top: 0.5rem;
                 font-weight: 500;
                 color: $link-color;
                 &:hover { text-decoration: underline; }
             }
-        }
-   }
+        } // .shipment-info sonu
 
-   // Adres Detayları
+       // === Kargo Takip Olayları Stilleri ===
+        .shipment-tracking-events {
+            margin-top: 1.5rem; // Üstteki bilgilerle arasını aç
+            padding-top: 1rem;
+            border-top: 1px dashed $border-color-medium; // Ayırıcı çizgi
+
+            h5 { // "Kargo Hareketleri" başlığı
+                margin-bottom: 1rem;
+                font-size: 1.05em;
+                font-weight: 500;
+            }
+
+            .tracking-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                position: relative; // Çizgi için referans (opsiyonel)
+            }
+
+            .tracking-event {
+                padding: 0.8rem 0;
+                padding-left: 1.5rem; // Opsiyonel çizgi/ikon için boşluk
+                position: relative;
+                border-bottom: 1px solid $tracking-event-border; // Olayları ayır
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                .event-timestamp {
+                    font-size: 0.85em;
+                    color: $tracking-timestamp-color;
+                    margin-bottom: 0.3rem;
+                    display: block;
+                }
+
+                .event-details {
+                    font-size: 0.95em;
+
+                    .event-description {
+                        font-weight: 500;
+                    }
+
+                    .event-location {
+                        color: $tracking-timestamp-color;
+                        margin-left: 5px;
+                        font-style: italic;
+                    }
+                }
+            } // .tracking-event sonu
+
+             .no-events-info { // Olay yoksa mesajı
+                 font-size: 0.9em;
+                 color: $text-color-muted;
+                 margin-top: 1rem;
+                 font-style: italic;
+             }
+
+        } // .shipment-tracking-events sonu
+       // === ===
+
+   } // .shipment-details sonu
+
+   // Adres Detayları Bölümü
     .address-details {
         display: flex;
         gap: 2rem; // Adres sütunları arası boşluk
-        flex-wrap: wrap;
+        flex-wrap: wrap; // Küçük ekranda alt alta
          .address-column {
              flex: 1; // Eşit yer kapla
              min-width: 250px; // Minimum genişlik
              h4 { margin-bottom: 0.8rem; font-size: 1.1em; }
              address { font-style: normal; line-height: 1.6; font-size: 0.9em;}
-             strong { display: block; margin-bottom: 0.3rem;}
+             strong { display: block; margin-bottom: 0.3rem;} // İsim soyisim
              p { font-size: 0.9em; color: $text-color-muted; margin-top: 0.5rem;} // Adres yoksa mesajı
          }
-    }
+    } // .address-details sonu
 
-   // Siparişteki Ürünler
+   // Siparişteki Ürünler Bölümü
     .order-items-details {
         h4 { margin-bottom: 1rem; font-size: 1.1em; }
-        .order-item-row {
+        .order-item-row { // Her bir ürün satırı
             display: flex;
-            align-items: center;
-            gap: 1rem;
+            align-items: center; // Dikeyde ortala
+            gap: 1rem; // Elemanlar arası boşluk
             padding: 1rem 0;
             border-bottom: 1px solid $border-color;
-            &:last-child { border-bottom: none; padding-bottom: 0;}
-            &:first-child { padding-top: 0;}
+            &:last-child { border-bottom: none; padding-bottom: 0;} // Son elemanın alt çizgisini kaldır
+            &:first-child { padding-top: 0;} // İlk elemanın üst boşluğunu kaldır
 
-            img {
+            img { // Ürün resmi
                 width: 60px;
                 height: 60px;
                 object-fit: contain;
@@ -154,10 +236,20 @@ $return-status-color: #6c757d; // İade durumu metin rengi
                 border-radius: 4px;
                 flex-shrink: 0; // Küçülme
             }
-            .item-info {
+            .item-info { // Ürün adı, fiyatı, iade durumu
                 flex-grow: 1; // Kalan alanı doldur
-                a { font-weight: 500; color: $text-color-dark; display: block; margin-bottom: 0.2rem; &:hover{color:$link-color; text-decoration: underline;}}
-                span { font-size: 0.85em; color: $text-color-muted; display: block;} // Birim fiyatı alta alalım
+                a { // Ürün adı linki
+                    font-weight: 500;
+                    color: $text-color-dark;
+                    display: block;
+                    margin-bottom: 0.2rem;
+                    &:hover{color:$link-color; text-decoration: underline;}
+                 }
+                span { // Birim fiyatı
+                    font-size: 0.85em;
+                    color: $text-color-muted;
+                    display: block; // Alt satıra al
+                }
 
                  // İade Durumu Stili
                 .return-status-info {
@@ -167,26 +259,26 @@ $return-status-color: #6c757d; // İade durumu metin rengi
                     color: $return-status-color;
                     font-style: italic;
                 }
-            }
-            .item-quantity {
-                min-width: 60px; // Hizalama
+            } // .item-info sonu
+
+            .item-quantity { // Adet bilgisi
+                min-width: 60px; // Hizalama için
                 text-align: center;
                 font-size: 0.9em;
                 color: $text-color-muted;
             }
-            .item-total {
-                min-width: 100px; // Hizalama
+            .item-total { // Toplam fiyat
+                min-width: 100px; // Hizalama için
                 text-align: right;
                 font-weight: 500;
             }
-            // İade Butonu Alanı Stili
-            .item-actions {
+            .item-actions { // İade butonu alanı
                 min-width: 80px; // Buton için yer ayır
                 text-align: right;
 
-                .return-button {
-                    background-color: $return-button-bg;
-                    color: #333;
+                .return-button { // İade butonu
+                    background-color: $return-button-bg; // Sarı
+                    color: #333; // Koyu yazı
                     border: none;
                     border-radius: 4px;
                     padding: 0.4rem 0.8rem;
@@ -197,12 +289,16 @@ $return-status-color: #6c757d; // İade durumu metin rengi
                     &:hover {
                         background-color: darken($return-button-bg, 10%);
                     }
+                    &:disabled { // Opsiyonel: disable durumu
+                       opacity: 0.6;
+                       cursor: not-allowed;
+                    }
                 }
             } // .item-actions sonu
 
-            // Küçük Ekran Düzenlemesi
+            // Küçük Ekran Düzenlemesi (Ürün satırı için)
              @media (max-width: 576px) {
-                  flex-wrap: wrap;
+                  flex-wrap: wrap; // Alt alta geç
                   img { width: 45px; height: 45px;}
                   .item-info { flex-basis: 100%; order: -1; margin-bottom: 0.5rem;} // Ürün adı üste
                   .item-quantity { text-align: left; min-width: auto; margin-right: 1rem;}
@@ -214,6 +310,10 @@ $return-status-color: #6c757d; // İade durumu metin rengi
                   }
              } // @media sonu
         } // .order-item-row sonu
-         p { font-size: 0.9em; color: $text-color-muted; } // Ürün yoksa mesajı
+
+         // Ürün yoksa gösterilecek mesaj
+         p { font-size: 0.9em; color: $text-color-muted; }
+
     } // .order-items-details sonu
+
 } // .order-detail-container sonu

@@ -6,6 +6,7 @@ import { UserSummary, Address } from '../../../shared/models/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '../../../core/services/notification.service'; // <-- NotificationService import et
 import { finalize } from 'rxjs/operators'; // finalize operatörünü import et
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-user-profile',
@@ -34,7 +35,8 @@ export class UserProfileComponent implements OnInit {
     private authService: AuthService,
     private userService: UserService,
     private fb: FormBuilder,
-    private notificationService: NotificationService // <-- Inject et
+    private notificationService: NotificationService,
+    private router: Router
   ) {
     this.currentUser$ = this.authService.currentUser$;
   }
@@ -219,5 +221,23 @@ error: (err) => {
             }
         });
    }
+
+
+     // === YENİ: Profil Düzenleme Placeholder ===
+  editProfileInfo(): void {
+    console.log("Profil düzenleme modal/form açılacak.");
+    alert("Profil düzenleme işlevi henüz eklenmedi.");
+    // TODO: Modal aç veya alanları düzenlenebilir yap
+    // Örnek: this.openEditProfileModal();
+}
+// === ===
+
+// === YENİ: Şifre Değiştirme Placeholder ===
+changePassword(): void {
+    console.log("Şifre değiştirme sayfasına yönlendirilecek.");
+    alert("Şifre değiştirme işlevi henüz eklenmedi.");
+    // TODO: Şifre değiştirme sayfasına yönlendir
+    // Örnek: this.router.navigate(['/buyer/profile/change-password']);
+}
 
 } // UserProfileComponent sınıfının sonu

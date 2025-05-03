@@ -11,24 +11,31 @@
             <tr>
               <th>Sipariş No</th>
               <th>Tarih</th>
-              <th>Satılan Ürün(ler)</th> <th>Adet</th>
-              <th>Tutar</th>
+              <th>Satılan Ürün</th>
+              <th>Adet</th>
+              <th>Ürün Tutarı</th>
               <th>Sipariş Durumu</th>
-              <th>Aksiyon</th>
+              <th>Aksiyonlar</th>
             </tr>
           </thead>
           <tbody>
             <ng-container *ngFor="let order of orders">
                 <ng-container *ngFor="let item of order.items">
-                    <tr *ngIf="true"> <td>{{ order.id }}</td>
+                    <tr class="order-item-row">
+                        <td>
+                            <a (click)="viewOrderDetails(order.id)" class="order-id-link" title="Sipariş Detayını Gör">
+                                #{{ order.id }}
+                            </a>
+                        </td>
                         <td>{{ order.orderDate | date:'dd.MM.yyyy HH:mm' }}</td>
                         <td>
                           <div class="product-info">
                               <img [src]="item.product.imageUrl || 'https://via.placeholder.com/40?text=?'"
                                    [alt]="item.product.name" class="product-thumbnail">
                               <span>{{ item.product.name }}</span>
+                              <small *ngIf="item.returnStatus" class="return-status-info">(İade: {{ item.returnStatus }})</small>
                           </div>
-                      </td>
+                        </td>
                         <td>{{ item.quantity }}</td>
                         <td>{{ item.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</td>
                         <td>
@@ -37,15 +44,24 @@
                           </span>
                         </td>
                         <td class="actions">
-                            <button *ngIf="order.status === 'PROCESSING'"
-                                    class="action-btn ship-btn"
-                                    title="Kargoya Verildi İşaretle"
-                                    (click)="markOrderItemAsShipped(order.id, item.id)"> 🚚
-                            </button>
-                            </td>
+                          <button *ngIf="order.status === 'PROCESSING' && !item.returnStatus"
+                                  class="action-btn ship-btn"
+                                  title="Kargoya Verildi İşaretle"
+                                  (click)="markOrderItemAsShipped(order.id, item)"
+                                  [disabled]="actionLoading[item.id]">
+                                  <span *ngIf="!actionLoading[item.id]">Kargola 🚚</span>
+                                  <span *ngIf="actionLoading[item.id]">...</span>
+                          </button>
+
+                          <div *ngIf="(order.status === 'SHIPPED' || order.status === 'DELIVERED') && order.shipments && order.shipments.length > 0" class="shipment-info-cell">
+                             <small title="{{ order.shipments[0]?.carrier }} - {{ order.shipments[0]?.trackingNumber }}">
+                                 Kargolandı
+                             </small>
+                          </div>
+                          <span *ngIf="order.status !== 'PROCESSING' && order.status !== 'SHIPPED' && order.status !== 'DELIVERED'">-</span>
+                      </td>
                     </tr>
-                </ng-container>
-            </ng-container> </tbody>
+                     </ng-container> </ng-container> </tbody>
         </table>
      </div>
   </ng-container>

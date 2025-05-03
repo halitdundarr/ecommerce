@@ -332,4 +332,17 @@ export class UserService {
     return throwError(() => new Error(userMessage));
   }
 
+  getUserById(userId: number | string): Observable<UserSummary | undefined> {
+    // Bu endpoint admin yetkisi gerektirebilir
+    const url = `${this.ADMIN_USER_API_URL}/${userId}`; // Veya USER_API_URL? Backend'e bağlı.
+    console.log(`Workspaceing user summary for ID: ${userId}`);
+    return this.http.get<BackendDtoUserSummary>(url).pipe( // Backend DTO'dan map et
+        map(dto => this.mapDtoUserSummaryToUserSummary(dto)),
+        catchError(err => {
+            if (err.status === 404) return of(undefined);
+            return this.handleError(err);
+        })
+    );
+}
+
 } // UserService sınıfının sonu
