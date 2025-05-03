@@ -1,55 +1,53 @@
-<div class="seller-product-list-container"> <div class="page-header">
-  <h3>Ürünlerim</h3>
-  <button class="add-new-btn" (click)="addNewProduct()">
-    <i class="icon-plus">➕</i> Yeni Ürün Ekle
-  </button>
-</div>
+<div class="seller-product-list-container">
+  <div class="page-header">
+    <h3>Ürünlerim</h3>
+    <button class="add-new-btn" (click)="addNewProduct()">
+      <i class="icon-plus">➕</i> Yeni Ürün Ekle
+    </button>
+  </div>
 
-<app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
-<div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
 
-<ng-container *ngIf="(products$ | async) as products; else loadErrorOrEmpty">
-   <div *ngIf="products.length > 0; else noProducts" class="product-table-container">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Görsel</th>
-            <th>Ürün Adı</th>
-            <th>Kategori</th>
-            <th>Fiyat</th>
-            <th>Stok</th>
-            <th>Durum</th> <th>Aksiyonlar</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let product of products">
-            <td>{{ product.id }}</td>
-            <td>
-              <img [src]="product.images?.[0]?.imageUrl || 'https://via.placeholder.com/40?text=?'"
-                   [alt]="product.name" class="product-thumbnail">
-            </td>
-            <td>{{ product.name }}</td>
-            <td>{{ product.category?.name || '---' }}</td>
-            <td>{{ product.price | currency:'TRY':'symbol':'1.2-2' }}</td>
-            <td>{{ product.stockQuantity ?? 'N/A' }}</td>
-            <td>
-              <span class="status-badge status-active">Aktif</span> </td>
-            <td class="actions">
-              <button class="action-btn edit-btn" (click)="editProduct(product.id)" title="Düzenle">✏️</button>
-              <button class="action-btn delete-btn" (click)="deleteProduct(product.id, product.name)" title="Sil">🗑️</button>
+  <ng-container *ngIf="(products$ | async) as products; else loadErrorOrEmpty">
+     <div *ngIf="products.length > 0; else noProducts" class="product-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Görsel</th>
+              <th>Ürün Adı</th>
+              <th>Marka / Model</th> <th>Fiyat</th>
+              <th>Aksiyonlar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of products">
+              <td>{{ product.id }}</td>
+              <td>
+                <img [src]="product.imageUrl || 'https://via.placeholder.com/40?text=?'"
+                     [alt]="product.name" class="product-thumbnail">
               </td>
-          </tr> </tbody>
-      </table>
-   </div> </ng-container>
+              <td>{{ product.name }}</td>
+              <td>{{ product.brand || '---' }} / {{ product.model || '---' }}</td>
+              <td>{{ product.price | currency:'TRY':'symbol':'1.2-2' }}</td>
+              <td class="actions">
+                <button class="action-btn edit-btn" (click)="editProduct(product.id)" title="Düzenle">✏️</button>
+                <button class="action-btn delete-btn" (click)="deleteProduct(product.id, product.name)" title="Sil">🗑️</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+     </div>
+  </ng-container>
 
-<ng-template #loadErrorOrEmpty>
-    <div *ngIf="!isLoading && !error">
-         <ng-container *ngTemplateOutlet="noProducts"></ng-container>
-    </div>
-</ng-template>
-<ng-template #noProducts>
-    <p class="no-products">Gösterilecek ürününüz bulunmamaktadır.</p>
-    </ng-template>
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+           <ng-container *ngTemplateOutlet="noProducts"></ng-container>
+      </div>
+  </ng-template>
+  <ng-template #noProducts>
+      <p class="no-products">Gösterilecek ürününüz bulunmamaktadır.</p>
+  </ng-template>
 
 </div>

@@ -2,39 +2,27 @@
 
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'; // HttpParams eklendi (kullanılmasa da)
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, throwError, EMPTY } from 'rxjs';
 import { map, catchError, tap, switchMap, finalize } from 'rxjs/operators';
 import { Product, ProductSummary } from '../../shared/models/product.model';
-import { Wishlist, WishlistItem } from '../../shared/models/wishlist.model'; // Frontend modelleri
+import { Wishlist, WishlistItem } from '../../shared/models/wishlist.model';
 import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment'; // <-- environment import et
 
-// --- Backend DTO Arayüzleri ---
-interface BackendDtoProductSummary {
-    productId: number | string;
-    name: string;
-    price: any;
-    primaryImageUrl?: string;
-    averageRating?: number;
-    brand?: string;
-    model?: string;
-}
-interface BackendDtoWishlistItem {
-    product: BackendDtoProductSummary;
-    // dateAdded?: string | Date;
-}
-interface BackendDtoWishlist {
-    wishlistId?: number;
-    items: BackendDtoWishlistItem[];
-}
-// ----------------------------
-
-const WISHLIST_API_URL = 'http://localhost:8080/api/wishlist'; // API URL
+// --- Backend DTO Arayüzleri (Aynı kalabilir) ---
+interface BackendDtoProductSummary { productId: number | string; name: string; price: any; primaryImageUrl?: string; averageRating?: number; brand?: string; model?: string; }
+interface BackendDtoWishlistItem { product: BackendDtoProductSummary; /* dateAdded?: string | Date; */ }
+interface BackendDtoWishlist { wishlistId?: number; items: BackendDtoWishlistItem[]; }
+// -----------------------------------------------
 
 @Injectable({
   providedIn: 'root'
 })
 export class WishlistService {
+
+  // --- API URL'si environment'dan alınacak ---
+  private readonly WISHLIST_API_URL = `${environment.apiUrl}/api/wishlist`; // <-- environment kullan
 
   private wishlistSubject = new BehaviorSubject<Wishlist | null>(null);
   public wishlist$: Observable<Wishlist | null> = this.wishlistSubject.asObservable();
@@ -50,87 +38,107 @@ export class WishlistService {
     private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
+    // Kullanıcı durumu değiştikçe wishlist'i yükle/temizle (Aynı kalabilir)
     this.authService.isLoggedIn$.pipe(
         switchMap(isLoggedIn => {
             if (isLoggedIn && isPlatformBrowser(this.platformId)) {
+                // Giriş yapıldığında fetchWishlistFromServer zaten subject'i güncelliyor.
                 return this.fetchWishlistFromServer();
             } else {
-                this._updateWishlistState(null);
+                this._updateWishlistState(null); // Login değilse temizle
                 return of(null);
             }
         })
-    ).subscribe();
+    ).subscribe(); // Abone ol ve yönet
   }
 
+  // Wishlist'i backend'den çekme
   private fetchWishlistFromServer(): Observable<Wishlist | null> {
     if (!this.isLoggedInAndBrowser()) { return of(null); }
 
     this.isLoading.next(true);
-    console.log('Fetching wishlist from server...');
-    return this.http.get<BackendDtoWishlist>(WISHLIST_API_URL).pipe(
+    const url = this.WISHLIST_API_URL; // Environment'dan alınan URL
+    console.log(`Workspaceing wishlist from server: ${url}`);
+    return this.http.get<BackendDtoWishlist>(url).pipe(
         map(dtoWishlist => this.mapDtoWishlistToWishlist(dtoWishlist)),
         tap(wishlist => console.log('Wishlist fetched:', wishlist)),
-        catchError(err => {
-            console.error('Error fetching wishlist:', err);
-            this._updateWishlistState(null);
-            return throwError(() => new Error('İstek listesi yüklenirken bir hata oluştu.'));
-        }),
+        catchError(this.handleError), // Hata yönetimini kullan
         finalize(() => this.isLoading.next(false))
     ).pipe(
-        tap(wishlist => this._updateWishlistState(wishlist))
+         // Başarılı fetch sonrası state'i güncelle (subscribe yerine pipe içinde tap ile de yapılabilir)
+         tap(wishlist => this._updateWishlistState(wishlist))
     );
   }
 
+  // Wishlist'e ürün ekleme
   addToWishlist(product: Product | ProductSummary): void {
     if (!this.isLoggedInAndBrowser() || !product) return;
 
     this.isLoading.next(true);
     const productId = product.id;
-    console.log(`Adding product ${productId} to wishlist`);
+    const url = `${this.WISHLIST_API_URL}/products/${productId}`; // Product ID ile endpoint
+    console.log(`Adding product ${productId} to wishlist at ${url}`);
 
-    this.http.post<BackendDtoWishlist>(`<span class="math-inline">\{WISHLIST\_API\_URL\}/products/</span>{productId}`, {}).pipe(
+    // API URL'si WISHLIST_API_URL değişkeninden alındı
+    this.http.post<BackendDtoWishlist>(url, {}).pipe( // Body boş {}
         map(dtoWishlist => this.mapDtoWishlistToWishlist(dtoWishlist)),
         catchError(this.handleError),
         finalize(() => this.isLoading.next(false))
     ).subscribe(wishlist => {
         if (wishlist) {
-            this._updateWishlistState(wishlist);
+            this._updateWishlistState(wishlist); // State'i güncelle
+            // Bildirim eklenebilir: this.notificationService.showSuccess(...)
             alert(`${product.name} istek listenize eklendi!`);
         }
     });
   }
 
+  // Wishlist'ten ürün çıkarma
   removeFromWishlist(productId: number | string): void {
     if (!this.isLoggedInAndBrowser()) return;
 
     this.isLoading.next(true);
-    console.log(`Removing product ${productId} from wishlist`);
+    const url = `${this.WISHLIST_API_URL}/products/${productId}`; // Product ID ile endpoint
+    console.log(`Removing product ${productId} from wishlist at ${url}`);
 
-    // *** DÜZELTME: <void> generic tipini kullan ***
-    this.http.delete<void>(`<span class="math-inline">\{WISHLIST\_API\_URL\}/products/</span>{productId}`,
-     //  { responseType: 'void' }
-      ).pipe(
+    // ***** DÜZELTME: Backend void (204) döndüğü için <void> kullan *****
+    this.http.delete<void>(url).pipe(
       catchError(this.handleError),
       finalize(() => this.isLoading.next(false))
-  ).subscribe(() => {
-      console.log(`Product ${productId} removed successfully.`);
-      this.fetchWishlistFromServer().subscribe({
-          error: (err) => console.error("Error refetching wishlist after remove:", err)
-      });
-  });
+    ).subscribe({
+        next: () => {
+            // Başarılı silme sonrası state'i güncellemek için listeyi yeniden çek
+            console.log(`Product ${productId} removed successfully trigger. Refetching wishlist.`);
+            // Silme işlemi backend'de yapıldı, frontend state'ini güncellemek için
+            // en güvenli yol listeyi tekrar çekmek veya subject'i manuel güncellemektir.
+            // Manuel güncelleme daha performanslı olabilir ama hata riski taşır.
+            this.fetchWishlistFromServer().subscribe({
+                error: (err) => console.error("Error refetching wishlist after remove:", err)
+            });
+            // Bildirim eklenebilir: this.notificationService.showInfo(...)
+        },
+        error: (err) => {
+            // handleError zaten loglama yapar ve Error fırlatır, burada ek loglama veya UI işlemi yapılabilir.
+            console.error(`Failed to remove product ${productId} from wishlist:`, err);
+            // Kullanıcıya hata mesajı gösterilebilir (NotificationService ile)
+        }
+    });
+    // ***** BİTİŞ: DÜZELTME *****
   }
 
+  // Bir ürün wishlist'te mi kontrolü (Aynı kalabilir)
   isInWishlist(productId: number | string): Observable<boolean> {
     return this.wishlist$.pipe(
         map(wishlist => wishlist?.items.some(item => item.productId === productId) ?? false)
     );
   }
 
+  // Wishlist observable'ını döndür (Aynı kalabilir)
   getWishlist(): Observable<Wishlist | null> {
     return this.wishlist$;
   }
 
-  // --- Private Yardımcı Metotlar ---
+  // --- Private Yardımcı Metotlar (Aynı kalabilir) ---
 
   private isLoggedInAndBrowser(): boolean {
       const isLoggedIn = !!this.authService.getToken();
@@ -141,6 +149,7 @@ export class WishlistService {
   }
 
   private _updateWishlistState(wishlist: Wishlist | null): void {
+      // Gelen wishlist null değilse ve userId eksikse, mevcut kullanıcıdan ata
       if (wishlist && wishlist.userId === undefined) {
           wishlist.userId = this.authService.currentUserValue?.id ?? 0;
       }
@@ -148,95 +157,73 @@ export class WishlistService {
       console.log('Wishlist state updated:', wishlist);
   }
 
-  // --- DTO -> Model Dönüşümü ---
-  private mapDtoWishlistToWishlist(dto: BackendDtoWishlist): Wishlist {
-      const currentUserId = this.authService.currentUserValue?.id ?? 0;
+  // --- DTO -> Model Dönüşümü (Aynı kalabilir) ---
+  private mapDtoWishlistToWishlist(dto: BackendDtoWishlist): Wishlist | null { // null dönebilir
+      if (!dto) return null; // Gelen DTO null ise null dön
+      const currentUserId = this.authService.currentUserValue?.id ?? 0; // Mevcut kullanıcı ID'si
       return {
           id: dto.wishlistId,
-          userId: currentUserId,
-          items: dto.items?.map(itemDto => this.mapDtoWishlistItemToWishlistItem(itemDto)) || []
+          userId: currentUserId, // userId'yi AuthService'den al
+          items: dto.items?.map(itemDto => this.mapDtoWishlistItemToWishlistItem(itemDto)) || [] // items null ise boş dizi
       };
   }
 
   private mapDtoWishlistItemToWishlistItem(dto: BackendDtoWishlistItem): WishlistItem {
       return {
+          // WishlistItem'da ID yok, backend DTO'sunda da yok
           productId: dto.product.productId,
           product: this.mapDtoSummaryToProductSummary(dto.product),
+          // addedAt alanı DTO'da yok, modelden kaldırılabilir veya undefined bırakılabilir
       };
   }
 
   private mapDtoSummaryToProductSummary(dto: BackendDtoProductSummary): ProductSummary {
     return {
         id: dto.productId,
-        name: dto.name,
+        name: dto.name ?? 'İsimsiz Ürün',
         price: this.parsePrice(dto.price),
         imageUrl: dto.primaryImageUrl,
         averageRating: dto.averageRating,
+        brand: dto.brand,
+        model: dto.model
     };
   }
 
   private parsePrice(price: any): number {
       if (typeof price === 'number') return price;
       if (typeof price === 'string') {
-          const parsed = parseFloat(price);
+          const normalizedPrice = price.replace(',', '.');
+          const parsed = parseFloat(normalizedPrice);
           return isNaN(parsed) ? 0 : parsed;
       }
       if (price && typeof price.toNumber === 'function') return price.toNumber();
       return 0;
   }
 
- // Genel hata yönetimi
-// Bu fonksiyonu ilgili tüm servis dosyalarındaki mevcut handleError ile değiştirin
-private handleError(error: HttpErrorResponse): Observable<never> {
-  let userMessage = 'Bilinmeyen bir hata oluştu!'; // Varsayılan mesaj
-
-  // Hatanın istemci/ağ kaynaklı mı yoksa backend kaynaklı mı olduğunu kontrol et
-  if (error.status === 0 || !error.error) {
-      // status === 0 genellikle ağ hatası veya CORS sorunudur.
-      // error.error'ın null olması da istemci tarafı bir sorun olabilir.
-      console.error('Bir ağ/istemci hatası oluştu:', error.message || error);
-      userMessage = 'Bağlantı hatası veya istemci tarafında bir sorun oluştu. Lütfen bağlantınızı kontrol edin veya daha sonra tekrar deneyin.';
-
-  } else {
-      // Backend başarısız bir yanıt kodu döndürdü (4xx veya 5xx).
-      console.error(
-          `Backend Hata Kodu ${error.status}, ` +
-          `Gövde: ${JSON.stringify(error.error)}`); // Hata gövdesini logla
-
-      // Kullanıcıya gösterilecek mesajı belirle
-      // Backend'den gelen `message` alanını kullanmayı dene (ErrorResponse DTO'sundan)
-      const backendErrorMessage = error.error?.message || (typeof error.error === 'string' ? error.error : null);
-
-      if (backendErrorMessage) {
-          userMessage = backendErrorMessage; // Backend'in mesajını kullan
+ // --- Genel Hata Yönetimi (Diğer servislerdeki gibi) ---
+  private handleError(error: HttpErrorResponse): Observable<never> {
+    let userMessage = 'Bilinmeyen bir istek listesi hatası oluştu!';
+    // ... (handleError içeriği önceki servislerden kopyalanabilir) ...
+     if (error.status === 0 || !error.error) {
+        console.error('Ağ/İstemci hatası (WishlistService):', error.message || error);
+        userMessage = 'Bağlantı hatası veya istemci tarafında bir sorun oluştu.';
       } else {
-           // Genel durum kodlarına göre mesaj ata
-           switch (error.status) {
-               case 400:
-                   userMessage = 'Geçersiz istek. Lütfen gönderdiğiniz bilgileri kontrol edin.';
-                   break;
-               case 401:
-                   userMessage = 'Giriş yapmanız gerekiyor.';
-                   break;
-               case 403:
-                   userMessage = 'Bu işlem için yetkiniz bulunmamaktadır.';
-                   break;
-               case 404:
-                   userMessage = 'İstenen kaynak bulunamadı.';
-                   break;
-               case 409:
-                   userMessage = 'İşlem çakışması (örneğin, kayıt zaten var veya stok yetersiz).';
-                   break;
-               case 500:
-                   userMessage = 'Sunucu tarafında beklenmedik bir hata oluştu.';
-                   break;
-               default:
-                   userMessage = `Sunucu hatası (${error.status}). Lütfen daha sonra tekrar deneyin.`;
-           }
+        console.error(`Backend Hatası ${error.status} (WishlistService), Gövde:`, error.error);
+        const backendErrorMessage = error.error?.message || (typeof error.error === 'string' ? error.error : null);
+        if (backendErrorMessage) {
+            userMessage = backendErrorMessage;
+        } else {
+             switch (error.status) {
+                 case 400: userMessage = 'Geçersiz istek listesi isteği.'; break;
+                 case 401: userMessage = 'Bu işlem için giriş yapmalısınız.'; break;
+                 case 403: userMessage = 'Bu işlem için yetkiniz yok (Müşteri olmalısınız).'; break;
+                 case 404: userMessage = 'Ürün veya istek listesi bulunamadı.'; break;
+                 case 500: userMessage = 'Sunucu tarafında hata oluştu.'; break;
+                 default: userMessage = `Sunucu hatası (${error.status}).`;
+             }
+        }
       }
+    return throwError(() => new Error(userMessage));
   }
 
-  // Kullanıcıya yönelik hatayı içeren bir observable fırlat.
-  return throwError(() => new Error(userMessage));
-}
 } // WishlistService sınıfının sonu

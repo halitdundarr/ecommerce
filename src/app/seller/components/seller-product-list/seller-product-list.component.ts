@@ -1,8 +1,11 @@
+// src/app/seller/components/seller-product-list/seller-product-list.component.ts
 import { Component, OnInit } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { Product } from '../../../shared/models/product.model';
+// Product yerine ProductSummary import edin (veya ikisi de kalabilir)
+import { Product, ProductSummary } from '../../../shared/models/product.model';
 import { Router } from '@angular/router';
-import { ProductService } from '../../../features/services/product.service';
+import { ProductService } from '../../../features/services/product.service'; // Features altındaki service
+import { catchError, finalize } from 'rxjs/operators'; // finalize ve catchError ekleyin
 
 @Component({
   selector: 'app-seller-product-list',
@@ -11,7 +14,10 @@ import { ProductService } from '../../../features/services/product.service';
   standalone:false
 })
 export class SellerProductListComponent implements OnInit {
-  products$: Observable<Product[]> = of([]);
+  // ***** DEĞİŞİKLİK: Tip ProductSummary[] oldu *****
+  products$: Observable<ProductSummary[]> = of([]);
+  // ************************************************
+
   isLoading = false;
   error: string | null = null;
 
@@ -24,24 +30,46 @@ export class SellerProductListComponent implements OnInit {
   loadProducts(): void {
     this.isLoading = true;
     this.error = null;
-    this.products$ = this.productService.getProductsByCurrentSeller(); // Satıcıya özel metodu çağır
-    this.products$.subscribe({ /* Hata/Loading yönetimi */ });
+    // Servis metodu zaten Observable<ProductSummary[]> döndürüyor
+    this.products$ = this.productService.getProductsByCurrentSeller().pipe(
+        catchError(err => {
+             console.error("Error loading seller products:", err);
+             this.error = "Ürünleriniz yüklenirken bir hata oluştu.";
+             return of([]); // Hata durumunda boş liste döndür
+        }),
+        finalize(() => {
+            // Yüklenme durumunu asenkron güncelle
+            setTimeout(() => { this.isLoading = false; }, 0);
+        })
+    );
   }
 
-  // Satıcı için ürün ekleme/düzenleme/silme metotları (ileride)
   addNewProduct(): void {
-      // Admin'deki product-form component'i belki burada da kullanılabilir
-       this.router.navigate(['/seller/products/new']); // Örnek rota
-       alert('Yeni ürün ekleme formu açılacak (Satıcı için).');
+       this.router.navigate(['/seller/products/new']);
   }
+
   editProduct(productId: number | string): void {
-       this.router.navigate(['/seller/products/edit', productId]); // Örnek rota
-       alert(`Product ID ${productId} düzenlenecek (Satıcı için).`);
+       this.router.navigate(['/seller/products/edit', productId]);
   }
-   deleteProduct(productId: number | string, productName: string): void {
-       if(confirm(`'${productName}' ürününü silmek istediğinizden emin misiniz?`)) {
-            alert(`Product ID ${productId} silinecek (Satıcı için).`);
-            // Servis metodu çağrılıp liste yenilenecek
+
+   deleteProduct(productId: number | string, productName: string | undefined): void { // productName opsiyonel olabilir
+       if(confirm(`'${productName || 'Bu ürün'}' ürününü silmek istediğinizden emin misiniz?`)) {
+            // alert(`Product ID ${productId} silinecek (Satıcı için - servis çağrısı eklenecek).`);
+            this.productService.deleteProduct(productId).subscribe({
+                next: (response) => {
+                    if (response.success) {
+                        alert('Ürün başarıyla silindi.');
+                        this.loadProducts(); // Listeyi yenile
+                    } else {
+                        alert('Ürün silinemedi.');
+                        this.error = 'Ürün silinemedi.';
+                    }
+                },
+                error: (err) => {
+                     alert('Ürün silinirken hata oluştu.');
+                     this.error = 'Ürün silinirken hata oluştu: ' + err.message;
+                }
+            });
        }
    }
 }

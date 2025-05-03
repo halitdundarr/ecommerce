@@ -2,79 +2,71 @@
 
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'; // HttpClient eklendi
-import { BehaviorSubject, Observable, of, throwError, EMPTY } from 'rxjs'; // EMPTY eklendi
-import { catchError, map, tap, finalize, switchMap } from 'rxjs/operators';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, throwError, EMPTY } from 'rxjs';
+import { catchError, map, tap, finalize, switchMap, first } from 'rxjs/operators'; // first eklendi (getCurrentCartValue alternatifi için)
 import { Cart, CartItem } from '../../shared/models/cart.model';
 import { Product, ProductSummary } from '../../shared/models/product.model';
-import { AuthService } from './auth.service'; // AuthService eklendi
+import { AuthService } from './auth.service';
+import { environment } from '../../../environments/environment'; // <-- environment import et
 
-// --- Backend DTO Arayüzleri ---
-// (ProductService'teki gibi backend'den gelen yanıtlara uygun)
-interface BackendDtoProductSummary { /* ... */ productId: number | string; name: string; price: any; primaryImageUrl?: string; averageRating?: number; brand?: string; model?: string; }
-interface BackendDtoCartItem {
-    cartItemId: number;
-    quantity: number;
-    product: BackendDtoProductSummary; // Gömülü ürün özeti
-}
-interface BackendDtoCart {
-    cartId: number;
-    items: BackendDtoCartItem[];
-    calculatedTotal: any; // BigDecimal için 'any'
-}
-// ----------------------------
-
-const CART_API_URL = 'http://localhost:8080/api/v1/customer/cart'; // <<<--- API URL
+// --- Backend DTO Arayüzleri (Mevcut olanlar iyi görünüyor) ---
+interface BackendDtoProductSummary { productId: number | string; name: string; price: any; primaryImageUrl?: string; averageRating?: number; brand?: string; model?: string; }
+interface BackendDtoCartItem { cartItemId: number; quantity: number; product: BackendDtoProductSummary; }
+interface BackendDtoCart { cartId: number; items: BackendDtoCartItem[]; calculatedTotal: any; }
+// -----------------------------------------------------------
 
 @Injectable({
   providedIn: 'root'
 })
 export class CartService {
 
+  // --- API URL'si environment'dan alınacak ---
+  private readonly CART_API_URL = `${environment.apiUrl}/api/v1/customer/cart`; // <-- environment kullan
+
   private cartSubject = new BehaviorSubject<Cart | null>(null);
   public cart$: Observable<Cart | null> = this.cartSubject.asObservable();
-  private isLoading = new BehaviorSubject<boolean>(false); // Yüklenme durumu için
+  private isLoading = new BehaviorSubject<boolean>(false);
   public isLoading$ = this.isLoading.asObservable();
 
   constructor(
-    private http: HttpClient, // HttpClient inject edildi
-    private authService: AuthService, // AuthService inject edildi
+    private http: HttpClient,
+    private authService: AuthService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
-      // Kullanıcı durumu değiştikçe sepeti yükle/temizle
+      // Kullanıcı durumu değiştikçe sepeti yükle/temizle (Bu kısım aynı kalabilir)
       this.authService.isLoggedIn$.pipe(
           switchMap(isLoggedIn => {
               if (isLoggedIn && isPlatformBrowser(this.platformId)) {
-                  // Giriş yapıldıysa backend'den sepeti çek
                   return this.fetchCartFromServer();
               } else {
-                  // Giriş yapılmadıysa veya sunucu tarafıysa sepeti temizle
-                  this._updateCartState(null); // Subject'i null yap
-                  return of(null); // Observable döndür
+                  this._updateCartState(null);
+                  return of(null);
               }
           })
-      ).subscribe(); // Abone ol ve yönet
+      ).subscribe();
   }
 
   // Sepeti backend'den çekme
   private fetchCartFromServer(): Observable<Cart | null> {
-    if (!isPlatformBrowser(this.platformId) || !this.authService.getToken()) {
-        return of(null); // Tarayıcı değilse veya token yoksa işlem yapma
+    if (!this.isLoggedInAndBrowser()) { // Helper metot zaten platform ve token kontrolü yapıyor
+        return of(null);
     }
     this.isLoading.next(true);
-    console.log('Fetching cart from server...');
-    return this.http.get<BackendDtoCart>(CART_API_URL).pipe(
-        map(dtoCart => this.mapDtoCartToCart(dtoCart)), // DTO -> Model
+    console.log(`Workspaceing cart from server: ${this.CART_API_URL}`);
+    // API URL'si CART_API_URL değişkeninden alındı
+    return this.http.get<BackendDtoCart>(this.CART_API_URL).pipe(
+        map(dtoCart => this.mapDtoCartToCart(dtoCart)),
         tap(cart => {
             console.log('Cart fetched:', cart);
-            this._updateCartState(cart); // Subject'i güncelle
+            this._updateCartState(cart);
         }),
         catchError(err => {
             console.error('Error fetching cart:', err);
-            this._updateCartState(null); // Hata durumunda sepeti temizle
-            // Hata mesajını component'e iletmek için throwError kullanılabilir
-            return throwError(() => new Error('Sepet yüklenirken bir hata oluştu.'));
-            // Veya sadece null döndür: return of(null);
+            this._updateCartState(null);
+            // Hata mesajını merkezi handleError ile yönetelim
+            return this.handleError(err); // this.handleError çağır
+            // return throwError(() => new Error('Sepet yüklenirken bir hata oluştu.')); // Veya eski hali
         }),
         finalize(() => this.isLoading.next(false))
     );
@@ -82,62 +74,68 @@ export class CartService {
 
   // Sepete ürün ekleme
   addToCart(product: Product | ProductSummary, quantity: number = 1): void {
-    if (!this.isLoggedInAndBrowser()) return; // Giriş yapılmadıysa veya SSR ise çık
+    if (!this.isLoggedInAndBrowser()) return;
     if (!product || quantity <= 0) return;
 
     this.isLoading.next(true);
     const payload = { productId: product.id, quantity: quantity };
-    console.log('Adding item to cart:', payload);
+    const url = `${this.CART_API_URL}/items`; // items endpoint'i
+    console.log(`Adding item to cart at ${url}:`, payload);
 
-    this.http.post<BackendDtoCart>(`${CART_API_URL}/items`, payload).pipe(
+    // API URL'si CART_API_URL değişkeninden alındı
+    this.http.post<BackendDtoCart>(url, payload).pipe(
         map(dtoCart => this.mapDtoCartToCart(dtoCart)),
-        catchError(this.handleError),
+        catchError(this.handleError), // Merkezi hata yönetimi
         finalize(() => this.isLoading.next(false))
     ).subscribe(cart => {
         if (cart) {
-            this._updateCartState(cart); // Başarılı olursa state'i güncelle
-            alert(`${product.name} sepete eklendi!`); // Bildirim
+            this._updateCartState(cart);
+            // Bildirim NotificationService ile yapılabilir (isteğe bağlı)
+            // this.notificationService.showSuccess(`${product.name} sepete eklendi!`);
+            alert(`${product.name} sepete eklendi!`); // Şimdilik alert kalsın
         }
     });
   }
 
   // Ürün miktarını güncelleme
   updateQuantity(cartItemId: number | undefined, newQuantity: number): void {
-    if (!this.isLoggedInAndBrowser() || !cartItemId) return;
+    if (!this.isLoggedInAndBrowser() || cartItemId === undefined) return; // item.id kontrolü düzeltildi
 
     if (newQuantity <= 0) {
-        // Miktar 0 veya altı ise ürünü sil
-        this.removeFromCart(cartItemId);
+        this.removeFromCart(cartItemId); // Miktar 0 veya altı ise sil
         return;
     }
 
     this.isLoading.next(true);
-    // PUT isteği için quantity query param olarak gönderiliyor
     let params = new HttpParams().set('quantity', newQuantity.toString());
-    console.log(`Updating quantity for item ${cartItemId} to ${newQuantity}`);
+    const url = `${this.CART_API_URL}/items/${cartItemId}`; // cartItemId ile endpoint
+    console.log(`Updating quantity for item ${cartItemId} to ${newQuantity} at ${url}`);
 
-    this.http.put<BackendDtoCart>(`${CART_API_URL}/items/${cartItemId}`, null, { params }).pipe( // Body null
+    // API URL'si CART_API_URL değişkeninden alındı
+    this.http.put<BackendDtoCart>(url, null, { params }).pipe( // Body null
         map(dtoCart => this.mapDtoCartToCart(dtoCart)),
-        catchError(this.handleError),
+        catchError(this.handleError), // Merkezi hata yönetimi
         finalize(() => this.isLoading.next(false))
     ).subscribe(cart => {
-        if (cart) this._updateCartState(cart); // Başarılı olursa state'i güncelle
+        if (cart) this._updateCartState(cart);
     });
   }
 
   // Sepetten ürün çıkarma
   removeFromCart(cartItemId: number | undefined): void {
-    if (!this.isLoggedInAndBrowser() || !cartItemId) return;
+    if (!this.isLoggedInAndBrowser() || cartItemId === undefined) return;
 
     this.isLoading.next(true);
-    console.log(`Removing item ${cartItemId} from cart`);
+    const url = `${this.CART_API_URL}/items/${cartItemId}`; // cartItemId ile endpoint
+    console.log(`Removing item ${cartItemId} from cart at ${url}`);
 
-    this.http.delete<BackendDtoCart>(`${CART_API_URL}/items/${cartItemId}`).pipe(
+    // API URL'si CART_API_URL değişkeninden alındı
+    this.http.delete<BackendDtoCart>(url).pipe(
         map(dtoCart => this.mapDtoCartToCart(dtoCart)),
-        catchError(this.handleError),
+        catchError(this.handleError), // Merkezi hata yönetimi
         finalize(() => this.isLoading.next(false))
     ).subscribe(cart => {
-         if (cart) this._updateCartState(cart); // Başarılı olursa state'i güncelle
+         if (cart) this._updateCartState(cart);
     });
   }
 
@@ -146,165 +144,143 @@ export class CartService {
      if (!this.isLoggedInAndBrowser()) return;
 
      this.isLoading.next(true);
-     console.log('Clearing cart');
+     const url = this.CART_API_URL; // Ana cart endpoint'i
+     console.log(`Clearing cart at ${url}`);
 
-     this.http.delete<BackendDtoCart>(CART_API_URL).pipe(
-         map(dtoCart => this.mapDtoCartToCart(dtoCart)), // Boş sepet DTO'su dönecek
-         catchError(this.handleError),
+     // API URL'si CART_API_URL değişkeninden alındı
+     this.http.delete<BackendDtoCart>(url).pipe(
+         map(dtoCart => this.mapDtoCartToCart(dtoCart)),
+         catchError(this.handleError), // Merkezi hata yönetimi
          finalize(() => this.isLoading.next(false))
      ).subscribe(cart => {
-        // Normalde boş sepet döner, state'i ona göre güncelle
+        // Boş sepet DTO'su veya null dönebilir, ona göre state güncellenir
         this._updateCartState(cart ?? this._createEmptyCart());
      });
   }
 
-  // Sepeti Observable olarak döndüren metot
+  // Sepeti Observable olarak döndüren metot (Aynı kalabilir)
   getCart(): Observable<Cart | null> {
-    // Direkt subject'i döndür, yükleme logic'i constructor'da ve diğer metotlarda
     return this.cart$;
   }
 
-  // Mevcut sepet değerini senkron olarak almak için (dikkatli kullanılmalı)
+  // Mevcut sepet değerini senkron olarak almak için (OrderService kullanıyor)
   getCurrentCartValue(): Cart | null {
     return this.cartSubject.value;
   }
 
-  // --- Private Yardımcı Metotlar ---
+  // Alternatif: Asenkron olarak anlık değeri almak (daha güvenli)
+  // getCurrentCartOnce(): Observable<Cart | null> {
+  //    return this.cart$.pipe(first());
+  // }
 
-  // Tarayıcıda ve login olunmuş mu kontrolü
+
+  // --- Private Yardımcı Metotlar (Aynı kalabilir) ---
+
   private isLoggedInAndBrowser(): boolean {
-      const isLoggedIn = !!this.authService.getToken(); // Anlık token kontrolü
-      if (!isLoggedIn) {
+      const isLoggedIn = !!this.authService.getToken();
+      if (!isLoggedIn && isPlatformBrowser(this.platformId)) {
           console.warn('User not logged in. Cart operation cancelled.');
-          // İsteğe bağlı: Kullanıcıyı login'e yönlendir
-          // this.router.navigate(['/auth/login']);
       }
       return isLoggedIn && isPlatformBrowser(this.platformId);
   }
 
-  // Sepet state'ini güncelleyen ana metot
   private _updateCartState(cart: Cart | null): void {
       if (cart) {
-          // Toplamları frontend'de de hesaplayalım (backend'den gelen total kullanılabilir ama emin olmak için)
-          this._calculateTotals(cart);
+          this._calculateTotals(cart); // Toplamları frontend'de de hesapla
       }
-      this.cartSubject.next(cart); // Değişikliği yayınla
+      this.cartSubject.next(cart);
       console.log('Cart state updated:', cart);
   }
 
-  // Toplamları hesaplar (Frontend Modeline göre)
   private _calculateTotals(cart: Cart): void {
     cart.totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-    // Backend'den gelen totalPrice varsa onu kullanabiliriz, yoksa hesaplayalım
-    cart.totalPrice = cart.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    // Backend'den gelen totalPrice (calculatedTotal) varsa onu kullanmak daha doğru olabilir,
+    // ancak frontend'de de hesaplamak yedeklilik sağlar.
+    cart.totalPrice = cart.items.reduce((sum, item) => {
+        const price = item.unitPrice ?? 0; // unitPrice null ise 0 al
+        return sum + (price * item.quantity);
+    }, 0);
   }
 
-   // Boş bir sepet nesnesi oluşturur (Frontend Modeline göre)
    private _createEmptyCart(): Cart {
      return { items: [], totalItems: 0, totalPrice: 0 };
    }
 
-   // --- DTO -> Model Dönüşümü ---
+   // --- DTO -> Model Dönüşümü (Aynı kalabilir) ---
    private mapDtoCartToCart(dto: BackendDtoCart | null): Cart | null {
        if (!dto) return null;
        const cart: Cart = {
            id: dto.cartId,
-           items: dto.items.map(itemDto => this.mapDtoCartItemToCartItem(itemDto)),
-           // Backend totali varsa onu al, yoksa 0 ata (sonra _calculateTotals hesaplar)
-           totalPrice: this.parsePrice(dto.calculatedTotal),
+           items: dto.items?.map(itemDto => this.mapDtoCartItemToCartItem(itemDto)) ?? [], // items null ise boş dizi
+           totalPrice: this.parsePrice(dto.calculatedTotal), // Backend totalini kullan
            totalItems: 0 // _calculateTotals hesaplayacak
-           // userId backend DTO'da yok, cartSubject'e eklemeye gerek yok
        };
-       // Dönüşüm sonrası toplamları hesapla
-       this._calculateTotals(cart);
+       this._calculateTotals(cart); // totalItems'ı hesapla
        return cart;
    }
 
    private mapDtoCartItemToCartItem(dto: BackendDtoCartItem): CartItem {
-       return {
+       const item: CartItem = {
            id: dto.cartItemId,
            productId: dto.product.productId,
            quantity: dto.quantity,
-           unitPrice: this.parsePrice(dto.product.price), // DtoProductSummary'den fiyatı al
+           unitPrice: this.parsePrice(dto.product.price),
            totalPrice: 0, // _calculateTotals hesaplayacak
-           product: this.mapDtoSummaryToProductSummary(dto.product) // Gömülü DTO'yu map et
+           product: this.mapDtoSummaryToProductSummary(dto.product)
        };
+       item.totalPrice = (item.unitPrice ?? 0) * item.quantity; // totalPrice'ı burada da hesaplayabiliriz
+       return item;
    }
 
-    // ProductService'teki map fonksiyonlarının benzerleri (veya ortak bir mapper servisi kullanılabilir)
     private mapDtoSummaryToProductSummary(dto: BackendDtoProductSummary): ProductSummary {
       return {
           id: dto.productId,
-          name: dto.name,
+          name: dto.name ?? 'İsimsiz Ürün', // Null check
           price: this.parsePrice(dto.price),
           imageUrl: dto.primaryImageUrl,
           averageRating: dto.averageRating,
-          // categoryId: dto.categoryId // Varsa
+          brand: dto.brand, // brand/model ekleyebiliriz ProductSummary modeline
+          model: dto.model
       };
     }
 
     private parsePrice(price: any): number {
         if (typeof price === 'number') return price;
         if (typeof price === 'string') {
-            const parsed = parseFloat(price);
+             const normalizedPrice = price.replace(',', '.');
+            const parsed = parseFloat(normalizedPrice);
             return isNaN(parsed) ? 0 : parsed;
         }
          if (price && typeof price.toNumber === 'function') return price.toNumber();
         return 0;
     }
 
-    // Genel hata yönetimi (ProductService'teki ile aynı olabilir)
- // Bu fonksiyonu ilgili tüm servis dosyalarındaki mevcut handleError ile değiştirin
-private handleError(error: HttpErrorResponse): Observable<never> {
-  let userMessage = 'Bilinmeyen bir hata oluştu!'; // Varsayılan mesaj
-
-  // Hatanın istemci/ağ kaynaklı mı yoksa backend kaynaklı mı olduğunu kontrol et
-  if (error.status === 0 || !error.error) {
-      // status === 0 genellikle ağ hatası veya CORS sorunudur.
-      // error.error'ın null olması da istemci tarafı bir sorun olabilir.
-      console.error('Bir ağ/istemci hatası oluştu:', error.message || error);
-      userMessage = 'Bağlantı hatası veya istemci tarafında bir sorun oluştu. Lütfen bağlantınızı kontrol edin veya daha sonra tekrar deneyin.';
-
-  } else {
-      // Backend başarısız bir yanıt kodu döndürdü (4xx veya 5xx).
-      console.error(
-          `Backend Hata Kodu ${error.status}, ` +
-          `Gövde: ${JSON.stringify(error.error)}`); // Hata gövdesini logla
-
-      // Kullanıcıya gösterilecek mesajı belirle
-      // Backend'den gelen `message` alanını kullanmayı dene (ErrorResponse DTO'sundan)
-      const backendErrorMessage = error.error?.message || (typeof error.error === 'string' ? error.error : null);
-
-      if (backendErrorMessage) {
-          userMessage = backendErrorMessage; // Backend'in mesajını kullan
+    // --- Genel Hata Yönetimi ---
+    private handleError(error: HttpErrorResponse): Observable<never> {
+      let userMessage = 'Bilinmeyen bir sepet işlemi hatası oluştu!';
+      // ... (Diğer servislerdeki handleError mantığı buraya kopyalanabilir) ...
+      if (error.status === 0 || !error.error) {
+        console.error('Ağ/İstemci hatası (CartService):', error.message || error);
+        userMessage = 'Bağlantı hatası veya istemci tarafında bir sorun oluştu.';
       } else {
-           // Genel durum kodlarına göre mesaj ata
-           switch (error.status) {
-               case 400:
-                   userMessage = 'Geçersiz istek. Lütfen gönderdiğiniz bilgileri kontrol edin.';
-                   break;
-               case 401:
-                   userMessage = 'Giriş yapmanız gerekiyor.';
-                   break;
-               case 403:
-                   userMessage = 'Bu işlem için yetkiniz bulunmamaktadır.';
-                   break;
-               case 404:
-                   userMessage = 'İstenen kaynak bulunamadı.';
-                   break;
-               case 409:
-                   userMessage = 'İşlem çakışması (örneğin, kayıt zaten var veya stok yetersiz).';
-                   break;
-               case 500:
-                   userMessage = 'Sunucu tarafında beklenmedik bir hata oluştu.';
-                   break;
-               default:
-                   userMessage = `Sunucu hatası (${error.status}). Lütfen daha sonra tekrar deneyin.`;
-           }
-      }
-  }
+        console.error(`Backend Hatası ${error.status} (CartService), Gövde:`, error.error);
+        const backendErrorMessage = error.error?.message || (typeof error.error === 'string' ? error.error : null);
 
-  // Kullanıcıya yönelik hatayı içeren bir observable fırlat.
-  return throwError(() => new Error(userMessage));
-}
-}
+        if (backendErrorMessage) {
+            userMessage = backendErrorMessage;
+        } else {
+             switch (error.status) {
+                 case 400: userMessage = 'Geçersiz sepet isteği (örn: stok yetersiz).'; break; // InsufficientStockException buraya map olabilir
+                 case 401: userMessage = 'Bu işlem için giriş yapmalısınız.'; break;
+                 case 403: userMessage = 'Bu işlem için yetkiniz yok.'; break;
+                 case 404: userMessage = 'Sepet veya ürün bulunamadı.'; break;
+                 case 500: userMessage = 'Sunucu tarafında hata oluştu.'; break;
+                 default: userMessage = `Sunucu hatası (${error.status}).`;
+             }
+        }
+      }
+      // Kullanıcıya yönelik hatayı içeren bir observable fırlat.
+      return throwError(() => new Error(userMessage));
+    }
+
+} // CartService sınıfının sonu

@@ -1,7 +1,8 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-// import { ReviewService } from '../../services/review.service'; // Entegrasyon sırasında eklenecek
-// import { AuthService } from '../../../core/services/auth.service'; // Gerekirse kullanıcı bilgisi için
+import { ReviewService } from '../../services/review.service'; // ReviewService import et
+// import { AuthService } from '../../../core/services/auth.service'; // Gerekirse
+import { NotificationService } from '../../../core/services/notification.service'; // Bildirim için
 
 @Component({
   selector: 'app-add-review-form',
@@ -11,16 +12,17 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 })
 export class AddReviewFormComponent implements OnInit {
   @Input() productId!: number | string; // Ürün ID'si dışarıdan alınacak
-  @Output() reviewSubmitted = new EventEmitter<void>(); // Yorum gönderildiğinde event fırlatmak için (opsiyonel)
+  @Output() reviewSubmitted = new EventEmitter<void>(); // Yorum gönderildiğinde event fırlatmak için
 
   reviewForm!: FormGroup;
   isLoading = false;
-  errorMessage: string | null = null;
+  errorMessage: string | null = null; // Hata mesajını tutar (string veya null)
   ratingOptions: number[] = [1, 2, 3, 4, 5]; // Puan seçenekleri
 
   constructor(
     private fb: FormBuilder,
-    // private reviewService: ReviewService, // Entegrasyon sırasında eklenecek
+    private reviewService: ReviewService, // Inject et
+    private notificationService: NotificationService // Inject et
     // private authService: AuthService // Gerekirse
   ) {}
 
@@ -38,7 +40,6 @@ export class AddReviewFormComponent implements OnInit {
   // Puan seçimi için yardımcı metot (template'te kullanılacak)
   selectRating(rating: number): void {
     this.reviewForm.patchValue({ rating: rating });
-    // Seçili puanı görsel olarak belirtmek için CSS sınıfı ekleyebilirsiniz.
   }
 
   onSubmit(): void {
@@ -48,42 +49,40 @@ export class AddReviewFormComponent implements OnInit {
     }
 
     this.isLoading = true;
-    this.errorMessage = null;
+    this.errorMessage = null; // Önceki hatayı temizle
 
-    const reviewData = {
-      productId: this.productId,
+    const reviewData = { // Sadece rating ve comment gönderiyoruz
       rating: this.reviewForm.value.rating,
       comment: this.reviewForm.value.comment,
-      // userId: this.authService.currentUserValue?.id // Gerekirse kullanıcı ID'si eklenecek
     };
 
-    console.log('Gönderilecek Yorum Verisi (Placeholder):', reviewData);
+    console.log('Gönderilecek Yorum Verisi:', reviewData);
 
-    // --- GERÇEK API ÇAĞRISI (Entegrasyon sırasında eklenecek) ---
-    /*
+    // --- GERÇEK API ÇAĞRISI ---
     this.reviewService.addReview(this.productId, reviewData).subscribe({
       next: (savedReview) => {
         this.isLoading = false;
-        alert('Yorumunuz başarıyla gönderildi!');
+        this.notificationService.showSuccess('Yorumunuz başarıyla gönderildi!');
         this.reviewForm.reset();
-        this.reviewSubmitted.emit(); // Yorum listesini yenilemek için event fırlat
+        this.reviewSubmitted.emit(); // Parent component'e haber ver (listeyi yenilemek için)
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.message || 'Yorum gönderilirken bir hata oluştu.';
+        const defaultErrorMsg = 'Yorum gönderilirken bilinmeyen bir hata oluştu.';
+
+        // 1. Gösterilecek mesajı belirle (err.message null/undefined ise default mesajı kullan)
+        const messageToShow: string = err.message || defaultErrorMsg;
+
+        // 2. İstersen component'in errorMessage'ını da ayarla (template'te göstermek için)
+        this.errorMessage = messageToShow;
+
+        // 3. NotificationService'e null olma ihtimali olmayan messageToShow'u gönder
+        this.notificationService.showError(messageToShow, "Yorum Gönderilemedi");
+
         console.error('Error submitting review:', err);
       }
     });
-    */
-
-    // --- Mock İşlem (Şimdilik) ---
-    setTimeout(() => {
-      this.isLoading = false;
-      alert('Yorumunuz başarıyla gönderildi! (Mock)');
-      this.reviewForm.reset();
-      this.reviewSubmitted.emit(); // Yorum listesini yenilemek için event fırlat
-    }, 1000); // 1 saniye bekleme simülasyonu
-    // ---------------------------
+    // --- ---
   }
 
   // Kolay erişim için getter'lar

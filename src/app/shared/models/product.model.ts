@@ -1,69 +1,87 @@
-// Bu dosyada ürün, ürün resmi, kategori, değerlendirme gibi arayüzler olabilir.
+// src/app/shared/models/product.model.ts
 import { Category } from './category.model'; // Kategori modelini import et
 
 // Backend'deki DtoProduct'a karşılık gelir.
 export interface Product {
-  id: number | string; // Backend ID tipine göre string veya number
+  id: number | string;
   name: string;
-  sellerId?: number; // <<<--- Satıcı ID'si (opsiyonel)
-  description: string;
+  sellerId?: number;
+  description: string; // Bu alan zorunlu
   price: number;
-  stockQuantity?: number; // Stok miktarı, belki her zaman gelmez?
-  sku?: string; // Ürün kodu (Stock Keeping Unit)
-  // Kategori bilgisi: Ya sadece ID ya da tüm Category nesnesi olabilir backend'e göre.
-  categoryId?: number;
-  category?: Category; // Category interface'ini import ettik.
-  images?: ProductImage[]; // Ürün resimleri dizisi
-  attributes?: ProductAttribute[]; // Ürün özellikleri dizisi
-  averageRating?: number; // Ortalama puanı
-  reviews?: Review[]; // Değerlendirmeler dizisi
-  // ... Diğer gerekli alanlar
-  imageUrl?: string; // Genellikle ilk resmin URL'si
+  stockQuantity?: number;
+  sku?: string;
+  categoryId?: number; // Kategori ID'si (opsiyonel, category nesnesi de var)
+  category?: Category;
+  images?: ProductImage[];
+  attributes?: ProductAttribute[];
+  averageRating?: number;
+  reviews?: Review[]; // Yorumlar ayrı yüklenecekse opsiyonel olabilir
+  imageUrl?: string;
+
+  // --- EKLENEN ALANLAR ---
+  brand?: string;
+  model?: string;
+  dimensions?: string;
+  weight?: string;
+  color?: string;
+  warranty?: string;
+  keyFeatures?: string[];
+  specifications?: { [key: string]: string };
+  reviewCount?: number;
+  isApproved?: boolean; // Admin onayı için
+  approvedAt?: string | Date;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+  // -----------------------
 }
 
 // DtoProductImage
 export interface ProductImage {
   id: number;
-  imageUrl: string; // Resmin URL'si
-  altText?: string; // Resim için alternatif metin (erişilebilirlik)
-  isDefault?: boolean; // Ana resim mi?
+  imageUrl: string;
+  altText?: string;
+  isDefault?: boolean;
 }
 
 // DtoAttribute
 export interface ProductAttribute {
   id: number;
-  name: string; // Özellik adı (örn: Renk, Boyut)
-  value: string; // Özellik değeri (örn: Kırmızı, XL)
+  name: string;
+  value: string;
+  unit?: string;
+  attributeGroup?: string;
+  // displayOrder, isKeySpec, isFilterable frontend modelinde gerekli mi? Şimdilik eklenmedi.
 }
 
 // DtoReview
 export interface Review {
-  id: number;
-  rating: number; // 1-5 arası puan
-  comment?: string; // Yorum metni (opsiyonel olabilir)
-  userName: string; // Yorumu yapan kullanıcının adı
-  userId: number; // Yorumu yapan kullanıcının ID'si
-  productId: number | string; // Hangi ürüne ait olduğu
-  createdAt: string | Date; // Yorumun oluşturulma tarihi (string veya Date)
+  id: number; // reviewId backend DTO'sunda var
+  rating: number;
+  comment?: string;
+  userName: string; // customer.firstName + lastName olabilir veya direkt username
+  userId: number; // customer.userId
+  productId: number | string;
+  createdAt: string | Date;
 }
 
-// DtoVariant (Eğer ürünlerin renk/beden gibi varyantları varsa)
+// DtoVariant (Eğer kullanılıyorsa)
 export interface Variant {
     id: number;
-    sku: string;
-    price: number; // Varyanta özel fiyat olabilir
+    sku?: string; // sku Product'ta da olabilir, DTO'ya bakın
+    price: number; // Fiyat farkı değil, varyantın kendi fiyatı mı? DTO'ya bakın
     stockQuantity: number;
-    attributes: ProductAttribute[]; // Bu varyanta ait özellikler (örn: Renk=Mavi, Beden=L)
-    images?: ProductImage[]; // Varyanta özel resimler olabilir
+    attributes: ProductAttribute[];
+    images?: ProductImage[];
 }
 
-// DtoProductSummary (Liste görünümleri için daha az detaylı ürün bilgisi)
-// Ayrı bir interface olabilir veya Product'tan bazı alanları seçerek (Pick<>) oluşturulabilir.
+// DtoProductSummary
 export interface ProductSummary {
     id: number | string;
-    name?: string;
+    name: string; // name zorunlu olmalı
     price: number;
-    imageUrl?: string; // Genellikle ilk resmin URL'si
+    imageUrl?: string;
     averageRating?: number;
-    categoryId?: number; // Kategori ID'si (opsiyonel)
+    categoryId?: number;
+    brand?: string; // Summary'de de olabilir
+    model?: string; // Summary'de de olabilir
 }

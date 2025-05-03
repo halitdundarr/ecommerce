@@ -10,7 +10,8 @@
           <li><a routerLink="addresses" routerLinkActive="active-section">Adreslerim</a></li>
           <li><a routerLink="/buyer/orders">Siparişlerim</a></li>
           <li><a routerLink="/buyer/wishlist">İstek Listem</a></li>
-          </ul>
+          <li><a routerLink="/buyer/returns">İade Taleplerim</a></li>
+        </ul>
       </nav>
     </aside>
 
@@ -24,8 +25,11 @@
             <p><strong>E-posta:</strong> {{ user.email }}</p>
             <p><strong>Kullanıcı Tipi:</strong> {{ user.role }}</p>
             </div>
+          <div *ngIf="!user">
+             Kullanıcı bilgileri yükleniyor...
+          </div>
         </ng-container>
-        </section>
+      </section>
 
       <section class="profile-section" id="addresses">
         <h4>Adreslerim</h4>
@@ -39,14 +43,20 @@
           <div *ngIf="addresses.length > 0; else noAddresses">
             <div *ngFor="let address of addresses" class="address-card">
               <div class="address-details">
+                <strong>{{ address.addressTitle }} <span *ngIf="address.isDefault" class="default-badge">Varsayılan</span></strong>
+                {{ address.firstName }} {{ address.lastName }} <br>
                 {{ address.street }} <br>
                 {{ address.postalCode }} {{ address.city }} / {{ address.country }} <br>
                 Tel: {{ address.phoneNumber }}
               </div>
               <div class="address-actions">
-                <button (click)="editAddress(address)" title="Düzenle">✏️</button>
-                <button (click)="deleteAddress(address.id)" title="Sil">🗑️</button>
-                <button *ngIf="!address.isDefault" (click)="makeDefaultAddress(address.id)" title="Varsayılan Yap" class="default-btn">Varsayılan Yap</button>
+                <button (click)="editAddress(address)" title="Düzenle" [disabled]="!!actionLoading[address.id!]">✏️</button>
+                <button (click)="deleteAddress(address.id)" title="Sil" [disabled]="actionLoading[address.id!] === 'delete'">
+                   <span *ngIf="actionLoading[address.id!] !== 'delete'">🗑️</span>
+                   <span *ngIf="actionLoading[address.id!] === 'delete'">...</span> </button>
+                <button *ngIf="!address.isDefault" (click)="makeDefaultAddress(address.id)" title="Varsayılan Yap" class="default-btn" [disabled]="actionLoading[address.id!] === 'default'">
+                   <span *ngIf="actionLoading[address.id!] !== 'default'">Varsayılan Yap</span>
+                   <span *ngIf="actionLoading[address.id!] === 'default'">...</span> </button>
               </div>
             </div>
           </div>
@@ -62,58 +72,93 @@
         </div>
 
         <div *ngIf="showNewAddressForm" class="new-address-form-container">
-            <h5>Yeni Adres Ekle</h5>
-            <form [formGroup]="newAddressForm" (ngSubmit)="saveNewAddress()">
+            <h5>{{ editingAddressId ? 'Adresi Düzenle' : 'Yeni Adres Ekle' }}</h5> <form [formGroup]="newAddressForm" (ngSubmit)="saveOrUpdateAddress()">
+
                 <div class="form-group">
                     <label for="na-title">Adres Başlığı*</label>
-                    <input type="text" id="na-title" formControlName="addressTitle" placeholder="Ev Adresim, İş Adresim vb.">
-                    </div>
+                    <input type="text" id="na-title" formControlName="addressTitle" placeholder="Ev Adresim, İş Adresim vb."
+                           [ngClass]="{'is-invalid': newAddressForm.get('addressTitle')?.invalid && (newAddressForm.get('addressTitle')?.dirty || newAddressForm.get('addressTitle')?.touched)}">
+                    <div *ngIf="newAddressForm.get('addressTitle')?.invalid && (newAddressForm.get('addressTitle')?.dirty || newAddressForm.get('addressTitle')?.touched)" class="invalid-feedback">
+                         Adres başlığı zorunludur.
+                     </div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-group">
                         <label for="na-fname">Ad*</label>
-                        <input type="text" id="na-fname" formControlName="firstName">
+                        <input type="text" id="na-fname" formControlName="firstName"
+                               [ngClass]="{'is-invalid': newAddressForm.get('firstName')?.invalid && (newAddressForm.get('firstName')?.dirty || newAddressForm.get('firstName')?.touched)}">
+                         <div *ngIf="newAddressForm.get('firstName')?.invalid && (newAddressForm.get('firstName')?.dirty || newAddressForm.get('firstName')?.touched)" class="invalid-feedback">
+                             Ad zorunludur.
+                         </div>
                     </div>
                     <div class="form-group">
                         <label for="na-lname">Soyad*</label>
-                        <input type="text" id="na-lname" formControlName="lastName">
+                        <input type="text" id="na-lname" formControlName="lastName"
+                               [ngClass]="{'is-invalid': newAddressForm.get('lastName')?.invalid && (newAddressForm.get('lastName')?.dirty || newAddressForm.get('lastName')?.touched)}">
+                         <div *ngIf="newAddressForm.get('lastName')?.invalid && (newAddressForm.get('lastName')?.dirty || newAddressForm.get('lastName')?.touched)" class="invalid-feedback">
+                             Soyad zorunludur.
+                         </div>
                     </div>
                 </div>
+
                  <div class="form-group">
                     <label for="na-phone">Telefon Numarası*</label>
-                    <input type="tel" id="na-phone" formControlName="phoneNumber" placeholder="5xxxxxxxxx">
+                    <input type="tel" id="na-phone" formControlName="phoneNumber" placeholder="5xxxxxxxxx"
+                           [ngClass]="{'is-invalid': newAddressForm.get('phoneNumber')?.invalid && (newAddressForm.get('phoneNumber')?.dirty || newAddressForm.get('phoneNumber')?.touched)}">
+                     <div *ngIf="newAddressForm.get('phoneNumber')?.invalid && (newAddressForm.get('phoneNumber')?.dirty || newAddressForm.get('phoneNumber')?.touched)" class="invalid-feedback">
+                         Telefon numarası zorunludur.
+                     </div>
                  </div>
+
                 <div class="form-group">
                     <label for="na-street">Adres Satırı*</label>
-                    <input type="text" id="na-street" formControlName="street" placeholder="Mahalle, cadde, sokak, bina no, daire no">
+                    <input type="text" id="na-street" formControlName="street" placeholder="Mahalle, cadde, sokak, bina no, daire no"
+                           [ngClass]="{'is-invalid': newAddressForm.get('street')?.invalid && (newAddressForm.get('street')?.dirty || newAddressForm.get('street')?.touched)}">
+                     <div *ngIf="newAddressForm.get('street')?.invalid && (newAddressForm.get('street')?.dirty || newAddressForm.get('street')?.touched)" class="invalid-feedback">
+                         Adres satırı zorunludur.
+                     </div>
                 </div>
+
                  <div class="form-row">
                   <div class="form-group">
                     <label for="na-zip">Posta Kodu*</label>
-                    <input type="text" id="na-zip" formControlName="postalCode">
-                </div>
-                    <div class="form-group">
-                        <label for="na-city">Şehir*</label>
-                        <input type="text" id="na-city" formControlName="city">
-                    </div>
-                    <div class="form-group">
-                        <label for="na-country">Ülke*</label>
-                        <input type="text" id="na-country" formControlName="country">
-                    </div>
+                    <input type="text" id="na-zip" formControlName="postalCode"
+                           [ngClass]="{'is-invalid': newAddressForm.get('postalCode')?.invalid && (newAddressForm.get('postalCode')?.dirty || newAddressForm.get('postalCode')?.touched)}">
+                    <div *ngIf="newAddressForm.get('postalCode')?.invalid && (newAddressForm.get('postalCode')?.dirty || newAddressForm.get('postalCode')?.touched)" class="invalid-feedback">
+                         Posta kodu zorunludur.
+                     </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="na-city">Şehir*</label>
+                    <input type="text" id="na-city" formControlName="city"
+                           [ngClass]="{'is-invalid': newAddressForm.get('city')?.invalid && (newAddressForm.get('city')?.dirty || newAddressForm.get('city')?.touched)}">
+                    <div *ngIf="newAddressForm.get('city')?.invalid && (newAddressForm.get('city')?.dirty || newAddressForm.get('city')?.touched)" class="invalid-feedback">
+                         Şehir zorunludur.
+                     </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="na-country">Ülke*</label>
+                    <input type="text" id="na-country" formControlName="country"
+                           [ngClass]="{'is-invalid': newAddressForm.get('country')?.invalid && (newAddressForm.get('country')?.dirty || newAddressForm.get('country')?.touched)}">
+                    <div *ngIf="newAddressForm.get('country')?.invalid && (newAddressForm.get('country')?.dirty || newAddressForm.get('country')?.touched)" class="invalid-feedback">
+                         Ülke zorunludur.
+                     </div>
+                  </div>
                  </div>
 
                  <div *ngIf="addressError" class="error-message">
                     {{ addressError }}
                  </div>
                  <app-loading-spinner *ngIf="isSavingAddress"></app-loading-spinner>
+
                  <div class="form-actions">
                      <button type="submit" [disabled]="newAddressForm.invalid || isSavingAddress">
-                         {{ isSavingAddress ? 'Kaydediliyor...' : 'Adresi Kaydet' }}
+                         {{ isSavingAddress ? 'Kaydediliyor...' : (editingAddressId ? 'Adresi Güncelle' : 'Adresi Kaydet') }}
                      </button>
-                     <button type="button" class="cancel-btn" (click)="toggleNewAddressForm()" [disabled]="isSavingAddress">
+                     <button type="button" class="cancel-btn" (click)="toggleNewAddressForm(false)" [disabled]="isSavingAddress">
                          İptal
                      </button>
                  </div>
             </form>
-        </div>
-
-      </section> </main> </div> </div>
+        </div> </section> </main> </div> </div>
