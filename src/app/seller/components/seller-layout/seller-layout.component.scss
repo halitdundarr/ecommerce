@@ -1,0 +1,105 @@
+// Gerekli Sass modüllerini import et (Eğer modern fonksiyonlar kullanıldıysa)
+@use 'sass:math';
+@use 'sass:color';
+
+// Değişkenler (Admin paneli ile aynı - Merkezi bir dosyadan almak en iyisidir)
+$sidebar-bg: #2c3e50;          // Koyu mavi/gri
+$sidebar-text-color: #ecf0f1;    // Açık gri/beyaz
+$sidebar-active-bg: #34495e;     // Aktif link arkaplanı
+$sidebar-width: 240px;           // Sabit genişlik
+$content-bg: #f8f9fa;            // İçerik alanı arkaplanı
+$primary-color: #ff6000;         // Vurgu rengi (Aktif link çizgisi için)
+$logout-color: #e74c3c;          // Çıkış linki rengi
+$spacing-unit: 1rem;             // Boşluk birimi
+
+// === Ana Seller Layout Stili ===
+.seller-layout { // <<<--- DOĞRU SINIF ADI
+  display: flex;
+  min-height: 100vh; // Tüm ekran yüksekliğini kapla
+}
+
+// === Seller Sidebar Stili ===
+.seller-sidebar { // <<<--- DOĞRU SINIF ADI
+  flex: 0 0 $sidebar-width; // Sabit genişlik
+  background-color: $sidebar-bg;
+  color: $sidebar-text-color;
+  padding: 1rem 0;
+  display: flex; // İçeriği dikeyde yönetmek için
+  flex-direction: column;
+
+  .sidebar-header { // İç stiller admin ile aynı
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    h3 {
+      color: white;
+      margin: 0;
+      text-align: center;
+    }
+  }
+
+  .sidebar-nav { // İç stiller admin ile aynı
+    flex-grow: 1; // Kalan alanı kaplasın (logout'u aşağı itmek için)
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+
+      li a {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.9rem 1.5rem;
+        color: $sidebar-text-color;
+        text-decoration: none;
+        transition: background-color 0.2s;
+        font-size: 0.95em;
+        cursor: pointer; // Link olmayanlar için (logout gibi)
+
+        &:hover {
+          background-color: $sidebar-active-bg;
+        }
+
+        &.active-link { // Aktif rota için stil
+          background-color: $sidebar-active-bg;
+          font-weight: bold;
+          border-left: 3px solid $primary-color;
+          padding-left: calc(1.5rem - 3px);
+        }
+
+        i { // İkonlar için
+          width: 20px;
+          text-align: center;
+          font-size: 1.1em;
+        }
+
+        // Çıkış Yap Linki (Listenin sonunda ama sidebar'ın altında olması için)
+        &.logout-link {
+          margin-top: auto; // Yukarıdaki flex-grow sayesinde en alta iter
+          padding-top: 1.5rem; // Üstteki linklerden ayır
+          padding-bottom: 1.5rem;
+          color: $logout-color;
+          &:hover {
+              // darken yerine color.adjust kullanmak daha modern
+              background-color: color.adjust($logout-color, $lightness: -10%);
+              color: white;
+          }
+        }
+      } // a sonu
+    } // ul sonu
+  } // .sidebar-nav sonu
+} // .seller-sidebar sonu
+
+// === Seller İçerik Alanı Stili ===
+.seller-content { // <<<--- DOĞRU SINIF ADI
+  flex-grow: 1; // Kalan tüm alanı kapla
+  background-color: $content-bg;
+  padding: 1.5rem;
+  overflow-y: auto; // İçerik taşarsa scroll çıksın
+}
+
+// Placeholder İkonlar (Admin ile aynı - Gerçek ikon kütüphanesi kullanılmalı)
+.icon-dashboard::before { content: "📊"; }
+.icon-products::before { content: "📦"; }
+.icon-orders::before { content: "🛒"; }
+.icon-settings::before { content: "⚙️";}
+.icon-logout::before { content: "🚪"; }

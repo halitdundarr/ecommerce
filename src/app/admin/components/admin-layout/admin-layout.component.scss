@@ -1,0 +1,87 @@
+@use 'sass:math';
+// Gerekirse merkezi değişkenleri import edin: @use '../../../styles/variables' as *;
+$sidebar-bg: #2c3e50; // Koyu mavi/gri
+$sidebar-text-color: #ecf0f1; // Açık gri/beyaz
+$sidebar-active-bg: #34495e; // Aktif link arkaplanı
+$sidebar-width: 240px;
+$content-bg: #f8f9fa; // İçerik alanı arkaplanı
+
+.admin-layout {
+  display: flex;
+  min-height: 100vh; // Tüm ekran yüksekliğini kapla
+}
+
+.admin-sidebar {
+  flex: 0 0 $sidebar-width; // Sabit genişlik
+  background-color: $sidebar-bg;
+  color: $sidebar-text-color;
+  padding: 1rem 0;
+
+  .sidebar-header {
+    padding: 1rem 1.5rem;
+    margin-bottom: 1rem;
+    h3 {
+      color: white;
+      margin: 0;
+      text-align: center;
+    }
+  }
+
+  .sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li a {
+      display: flex; // İkon ve metni yan yana getir
+      align-items: center;
+      gap: 0.8rem; // Aradaki boşluk
+      padding: 0.9rem 1.5rem; // İç boşluk
+      color: $sidebar-text-color;
+      text-decoration: none;
+      transition: background-color 0.2s;
+      font-size: 0.95em;
+
+      &:hover {
+        background-color: $sidebar-active-bg;
+      }
+
+      &.active-link { // Aktif rota için stil
+        background-color: $sidebar-active-bg;
+        font-weight: bold;
+        border-left: 3px solid #ff6000; // Örnek aktif göstergesi
+        padding-left: calc(1.5rem - 3px);
+      }
+
+      i { // İkonlar için
+        width: 20px; // Hizalama için sabit genişlik
+        text-align: center;
+        font-size: 1.1em; // İkon boyutu (placeholder)
+      }
+       &.logout-link {
+           margin-top: 2rem; // Çıkış linkini biraz aşağı al
+           color: #e74c3c; // Farklı renk
+           &:hover { background-color: darken(#e74c3c, 10%); color: white;}
+       }
+    }
+  }
+}
+
+.admin-content {
+  flex-grow: 1; // Kalan tüm alanı kapla
+  background-color: $content-bg;
+  padding: 1.5rem; // İçerik alanı iç boşluğu
+  overflow-y: auto; // İçerik taşarsa scroll çıksın
+}
+
+// Placeholder İkonlar (Gerçek ikon kütüphanesi kullanılmalı)
+.icon-dashboard::before { content: "📊"; }
+.icon-users::before { content: "👥"; }
+.icon-products::before { content: "📦"; }
+.icon-orders::before { content: "🛒"; }
+.icon-logout::before { content: "🚪"; }
+// admin-layout.component.scss içine ekleyin
+.icon-payment::before { content: "💳"; }
+.icon-support::before { content: "🗣️"; }
+// .icon-returns placeholder'ını da ekleyelim:
+.icon-returns::before { content: "↩️"; }

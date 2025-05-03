@@ -1,0 +1,226 @@
+@use 'sass:math';
+@use 'sass:color';
+// Değişkenler (styles.scss'ten veya buradan)
+$primary-color: #ff6000;
+$border-color: #dee2e6;
+$text-color-dark: #343a40;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$success-color: #28a745; // Checkout butonu için
+$link-color: #007bff;
+$spacing-unit: 1rem;
+
+.cart-page-container {
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  padding: 1rem;
+
+  h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+  }
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed $border-color;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+
+  p {
+    font-size: 1.2em;
+    margin-bottom: 1rem;
+    color: $text-color-muted;
+  }
+
+  a {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    &:hover {
+       background-color: color.adjust($primary-color, $lightness: -10%);
+    }
+  }
+}
+
+.cart-layout {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start; // Özeti yukarıda tut
+
+  @media (max-width: 992px) {
+    flex-direction: column; // Küçük ekranlarda alt alta
+  }
+}
+
+.cart-items {
+  flex-grow: 1; // Mevcut alanı doldur
+
+  table {
+    width: 100%;
+    border-collapse: collapse; // Çizgileri birleştir
+
+    thead th {
+      text-align: left;
+      padding: 0.8rem 0.5rem;
+      border-bottom: 2px solid $border-color;
+      color: $text-color-muted;
+      font-weight: 500;
+      font-size: 0.9em;
+    }
+
+    tbody tr.cart-item {
+      border-bottom: 1px solid $border-color;
+
+      td {
+        padding: 1rem 0.5rem;
+        vertical-align: middle; // İçeriği dikey ortala
+      }
+    }
+
+    .item-image img {
+      max-width: 60px;
+      height: auto;
+      border: 1px solid $border-color;
+      border-radius: 4px;
+    }
+
+    .item-name a {
+      color: $text-color-dark;
+      font-weight: 500;
+      text-decoration: none;
+      &:hover {
+        color: $link-color;
+      }
+    }
+
+    .item-price, .item-total-price {
+      font-weight: 500;
+    }
+
+    .item-quantity .quantity-control {
+        display: flex;
+        align-items: center;
+        max-width: 120px; // Genişliği sınırla
+
+        button {
+            background-color: #e9ecef;
+            border: 1px solid $border-color;
+            color: $text-color-muted;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+            font-size: 1em;
+            line-height: 1;
+             &:hover { background-color: #ced4da;}
+             &:first-child { border-radius: 4px 0 0 4px;}
+             &:last-child { border-radius: 0 4px 4px 0;}
+        }
+
+        input[type="number"] {
+            width: 40px; // Genişlik
+            text-align: center;
+            border: 1px solid $border-color;
+            border-left: none;
+            border-right: none;
+            padding: 0.3rem 0;
+            font-size: 1em;
+            // Tarayıcı oklarını gizle (opsiyonel)
+            -moz-appearance: textfield;
+             &::-webkit-outer-spin-button,
+             &::-webkit-inner-spin-button {
+               -webkit-appearance: none;
+               margin: 0;
+             }
+        }
+    }
+
+
+    .item-remove button {
+      background: none;
+      border: none;
+      color: $danger-color;
+      cursor: pointer;
+      font-size: 1.2em;
+      padding: 0.5rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      &:hover {
+        opacity: 1;
+      }
+      i { display: inline-block; } // İkon için
+    }
+  }
+} // .cart-items sonu
+
+.cart-summary {
+  flex: 0 0 300px; // Sabit genişlik
+  background-color: #f8f9fa; // Hafif gri arkaplan
+  padding: 1.5rem;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+
+  h4 {
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: 0.8rem;
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.95em;
+
+    &.total {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid $border-color;
+    }
+  }
+
+  .cart-actions {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+
+    button {
+      padding: 0.8rem;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background-color 0.2s, opacity 0.2s;
+    }
+
+    .clear-cart-btn {
+      background-color: transparent;
+      color: $danger-color;
+      border: 1px solid $danger-color;
+      &:hover { background-color: lighten($danger-color, 35%); }
+    }
+
+    .checkout-btn {
+      background-color: $success-color;
+      color: white;
+      font-size: 1.1em;
+       &:hover { background-color: color.adjust($success-color, $lightness: -10%);}
+    }
+  }
+
+   @media (max-width: 992px) {
+       flex: 1 1 auto; // Tam genişlik al
+       width: 100%;
+       margin-top: 1rem; // Üst boşluk
+   }
+} // .cart-summary sonu

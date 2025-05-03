@@ -1,0 +1,62 @@
+<div class="seller-order-list-container">
+  <h3>Gelen Siparişler</h3>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(orders$ | async) as orders; else loadErrorOrEmpty">
+     <div *ngIf="orders.length > 0; else noOrders" class="order-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Sipariş No</th>
+              <th>Tarih</th>
+              <th>Satılan Ürün(ler)</th> <th>Adet</th>
+              <th>Tutar</th>
+              <th>Sipariş Durumu</th>
+              <th>Aksiyon</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let order of orders">
+                <ng-container *ngFor="let item of order.items">
+                    <tr *ngIf="true"> <td>{{ order.id }}</td>
+                        <td>{{ order.orderDate | date:'dd.MM.yyyy HH:mm' }}</td>
+                        <td>
+                          <div class="product-info">
+                              <img [src]="item.product.imageUrl || 'https://via.placeholder.com/40?text=?'"
+                                   [alt]="item.product.name" class="product-thumbnail">
+                              <span>{{ item.product.name }}</span>
+                          </div>
+                      </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</td>
+                        <td>
+                          <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                            {{ order.status }}
+                          </span>
+                        </td>
+                        <td class="actions">
+                            <button *ngIf="order.status === 'PROCESSING'"
+                                    class="action-btn ship-btn"
+                                    title="Kargoya Verildi İşaretle"
+                                    (click)="markOrderItemAsShipped(order.id, item.id)"> 🚚
+                            </button>
+                            </td>
+                    </tr>
+                </ng-container>
+            </ng-container> </tbody>
+        </table>
+     </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+           <ng-container *ngTemplateOutlet="noOrders"></ng-container>
+      </div>
+  </ng-template>
+  <ng-template #noOrders>
+      <p class="no-orders">Gösterilecek sipariş bulunmamaktadır.</p>
+  </ng-template>
+
+</div>

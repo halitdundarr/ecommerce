@@ -1,0 +1,76 @@
+@use 'sass:math';
+
+// Değişkenler
+$footer-bg: #343a40; // Koyu gri/siyah
+$footer-text-color: #adb5bd; // Açık gri
+$footer-link-color: #ffffff; // Beyaz
+$spacing-unit: 1rem;
+
+.app-footer {
+  background-color: $footer-bg;
+  color: $footer-text-color;
+  padding-top: math.div($spacing-unit, 2.5);
+  padding-bottom: math.div($spacing-unit, 1.5);
+  font-size: 0.9em;
+}
+
+.footer-content {
+  display: flex;
+  flex-wrap: wrap; // Küçük ekranlarda alt alta geçsin
+  justify-content: space-around; // Bölümleri aralıklı dağıt
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-unit math.div($spacing-unit, 1.5);
+  gap: $spacing-unit; // Bölümler arası boşluk
+}
+
+.footer-section {
+  flex: 1; // Eşit genişlikte olmaya çalışsın
+  min-width: 200px; // Minimum genişlik
+
+  h4 {
+    color: $footer-link-color; // Başlıklar beyaz
+    margin-bottom: $spacing-unit;
+    font-size: 1.1em;
+    border-bottom: 1px solid #495057; // Hafif ayırıcı çizgi
+    padding-bottom: math.div($spacing-unit, 2);
+  }
+
+  // Link listeleri
+  &.links ul {
+    padding: 0;
+    list-style: none;
+    li {
+      margin-bottom: math.div($spacing-unit, 2);
+      a {
+        color: $footer-text-color;
+        transition: color 0.2s;
+        &:hover {
+          color: $footer-link-color; // Üzerine gelince beyaz
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  // Sosyal medya ikonları
+  &.social a {
+    color: $footer-text-color;
+    font-size: 1.5em; // İkonları büyüt
+    margin-right: $spacing-unit;
+    transition: color 0.2s;
+    &:hover {
+      color: $footer-link-color;
+    }
+    // İkon sınıfları header'da tanımlanmıştı
+  }
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: $spacing-unit * 2;
+  padding-top: $spacing-unit;
+  border-top: 1px solid #495057; // Üstteki bölümden ayır
+  font-size: 0.85em;
+  color: #6c757d; // Daha soluk renk
+}

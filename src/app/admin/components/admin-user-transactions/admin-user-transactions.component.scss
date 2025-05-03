@@ -1,0 +1,30 @@
+// Stil değişkenleri...
+.user-transactions-container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+  }
+
+  .back-button {
+    background: none;
+    border: none;
+    color: #007bff; // Link rengi
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    font-size: 0.9em;
+    &:hover { text-decoration: underline; }
+  }
+
+  .error-message { /* ... */ }
+
+  // Tablo stilleri (order-management.component.scss'ten kopyalanabilir)
+  table { /* ... */ }
+  th, td { /* ... */ }
+  .status-badge { /* ... */ }
+}

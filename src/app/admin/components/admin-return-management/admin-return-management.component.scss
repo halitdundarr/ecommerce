@@ -1,0 +1,129 @@
+// Merkezi değişkenleri import et veya burada tanımla
+$border-color: #dee2e6;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$success-color: #28a745; // Onay butonu
+$warning-color: #ffc107; // Processing
+$info-color: #17a2b8; // Requested
+$header-bg: #f8f9fa;
+$link-color: #007bff;
+
+// İade Durum Renkleri (ReturnHistory'deki ile aynı)
+$status-requested: $info-color;
+$status-approved: $success-color;
+$status-rejected: $danger-color;
+$status-processing: $warning-color;
+$status-completed: $text-color-muted;
+$status-cancelled: lighten($text-color-muted, 20%);
+
+
+.return-management-container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.loading-indicator, .error-message, .no-requests {
+    text-align: center;
+    padding: 1.5rem;
+    color: $text-color-muted;
+ }
+.error-message {
+    color: $danger-color;
+    border: 1px solid lighten($danger-color, 30%);
+    background-color: lighten($danger-color, 40%);
+    border-radius: 4px;
+    margin-bottom: 1rem; // Diğer hatalardan ayır
+    &.action-error { // Aksiyon hatası için daha belirgin
+        font-weight: 500;
+    }
+}
+.no-requests { font-style: italic; }
+
+
+.return-table-container {
+    overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: $header-bg;
+    color: #495057;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1;
+  }
+
+   td {
+      a { // Sipariş ID linki
+          color: $link-color;
+          text-decoration: none;
+          &:hover { text-decoration: underline;}
+      }
+      small { color: $text-color-muted; }
+   }
+
+  // Durum Badge Stilleri (ReturnHistory'deki ile aynı)
+  .status-badge {
+      padding: 0.25em 0.6em;
+      font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 10px;
+      color: white;
+      text-transform: uppercase;
+      white-space: nowrap;
+
+      &.status-requested { background-color: $status-requested; }
+      &.status-approved { background-color: $status-approved; }
+      &.status-rejected { background-color: $status-rejected; }
+      &.status-processing { background-color: $status-processing; color: #333; }
+      &.status-completed { background-color: $status-completed; }
+      &.status-cancelled { background-color: $status-cancelled; }
+  }
+
+  // Aksiyon Butonları
+  .actions {
+      white-space: nowrap;
+      button {
+          font-size: 0.8em;
+          padding: 0.3rem 0.7rem;
+          margin-right: 0.5rem;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          color: white;
+          font-weight: 500;
+          &:last-child { margin-right: 0;}
+          &:disabled { opacity: 0.6; cursor: not-allowed;}
+      }
+      .approve-btn {
+          background-color: $success-color;
+          &:hover:not(:disabled){ background-color: darken($success-color, 10%); }
+      }
+      .reject-btn {
+          background-color: $danger-color;
+           &:hover:not(:disabled){ background-color: darken($danger-color, 10%); }
+      }
+  }
+}

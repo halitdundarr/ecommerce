@@ -1,0 +1,68 @@
+<div class="product-form-container">
+  <h3>{{ isEditMode ? 'Ürünü Düzenle' : 'Yeni Ürün Ekle' }}</h3>
+
+  <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+
+    <div class="form-group">
+      <label for="name">Ürün Adı*</label>
+      <input type="text" id="name" formControlName="name" placeholder="Ürün adı girin">
+      <div *ngIf="name?.invalid && (name?.dirty || name?.touched)" class="error-text">
+         <small *ngIf="name?.errors?.['required']">Ürün adı zorunludur.</small>
+         <small *ngIf="name?.errors?.['minlength']">Ürün adı en az 3 karakter olmalıdır.</small>
+      </div>
+    </div>
+
+    <div class="form-group">
+        <label for="categoryId">Kategori*</label>
+        <select id="categoryId" formControlName="categoryId">
+            <option [ngValue]="null" disabled>-- Kategori Seçin --</option>
+            <option *ngFor="let category of (categories$ | async)" [ngValue]="category.id">
+                {{ category.name }}
+            </option>
+        </select>
+         <div *ngIf="categoryId?.invalid && (categoryId?.dirty || categoryId?.touched)" class="error-text">
+            <small *ngIf="categoryId?.errors?.['required']">Kategori seçimi zorunludur.</small>
+         </div>
+    </div>
+
+    <div class="form-group">
+        <label for="description">Açıklama*</label>
+        <textarea id="description" formControlName="description" rows="4" placeholder="Ürün açıklamasını girin"></textarea>
+         <div *ngIf="description?.invalid && (description?.dirty || description?.touched)" class="error-text">
+            <small *ngIf="description?.errors?.['required']">Açıklama zorunludur.</small>
+         </div>
+    </div>
+
+    <div class="form-row">
+         <div class="form-group">
+           <label for="price">Fiyat (TL)*</label>
+           <input type="number" id="price" formControlName="price" min="0" step="0.01">
+            <div *ngIf="price?.invalid && (price?.dirty || price?.touched)" class="error-text">
+               <small *ngIf="price?.errors?.['required']">Fiyat zorunludur.</small>
+               <small *ngIf="price?.errors?.['min']">Fiyat negatif olamaz.</small>
+            </div>
+         </div>
+         <div class="form-group">
+           <label for="stockQuantity">Stok Adedi*</label>
+           <input type="number" id="stockQuantity" formControlName="stockQuantity" min="0">
+            <div *ngIf="stockQuantity?.invalid && (stockQuantity?.dirty || stockQuantity?.touched)" class="error-text">
+                <small *ngIf="stockQuantity?.errors?.['required']">Stok adedi zorunludur.</small>
+                <small *ngIf="stockQuantity?.errors?.['min']">Stok negatif olamaz.</small>
+            </div>
+         </div>
+     </div>
+
+     <div *ngIf="error" class="error-message api-error">
+      {{ error }}
+    </div>
+    <app-loading-spinner *ngIf="isLoading || isProductLoading"></app-loading-spinner>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="productForm.invalid || isLoading">
+        {{ isLoading ? 'Kaydediliyor...' : (isEditMode ? 'Güncelle' : 'Ürünü Ekle') }}
+      </button>
+      <button type="button" routerLink="/admin/products" class="cancel-btn">İptal</button>
+    </div>
+
+  </form>
+</div>

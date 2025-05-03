@@ -1,0 +1,76 @@
+<div class="user-management-container">
+  <h3>Kullanıcı Yönetimi</h3>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="actionError" class="error-message">{{ actionError }}</div>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(users$ | async) as users; else loadErrorOrEmpty">
+     <div *ngIf="users.length > 0; else noUsers" class="user-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Ad Soyad</th>
+              <th>E-posta</th>
+              <th>Rol</th>
+              <th>Durum</th> <th>Aksiyonlar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <td>{{ user.id }}</td>
+              <td>{{ user.firstName }} {{ user.lastName }}</td>
+              <td>{{ user.email }}</td>
+              <td><span class="role-badge role-{{user.role?.toLowerCase()}}">{{ user.role }}</span></td>
+              <td>
+                <span class="status-badge" [ngClass]="'status-' + (user.status?.toLowerCase() || 'active')">
+                  {{ user.status || 'Active' }}
+                </span>
+              </td>
+              <td class="actions">
+                <button *ngIf="user.status !== 'Banned' && user.role !== 'ADMIN'"
+                        class="action-btn ban-btn"
+                        (click)="banUser(user.id)"
+                        [disabled]="actionLoading[user.id]"
+                        title="Yasakla">
+                        {{ actionLoading[user.id] && actionType === 'ban' ? '...' : 'Yasakla' }} 🚫
+                </button>
+                <button *ngIf="user.status === 'Banned'"
+                         class="action-btn unban-btn"
+                         (click)="unbanUser(user.id)"
+                         [disabled]="actionLoading[user.id]"
+                         title="Yasağı Kaldır">
+                         {{ actionLoading[user.id] && actionType === 'unban' ? '...' : 'Aktif Et' }} ✅
+                </button>
+
+                <button *ngIf="user.role !== 'ADMIN'"
+                        class="action-btn reset-pwd-btn"
+                        (click)="resetPassword(user.id)"
+                        [disabled]="actionLoading[user.id]"
+                        title="Şifre Sıfırla (TODO)">
+                        🔑
+                </button>
+                <button class="action-btn view-transactions-btn"
+                        (click)="viewTransactions(user.id)"
+                        [disabled]="actionLoading[user.id]"
+                        title="İşlemleri Gör (TODO)">
+                        🧾
+                </button>
+                <span *ngIf="user.role === 'ADMIN'">-</span> </td>
+            </tr>
+          </tbody>
+        </table>
+     </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+           <ng-container *ngTemplateOutlet="noUsers"></ng-container>
+      </div>
+  </ng-template>
+  <ng-template #noUsers>
+      <p>Gösterilecek kullanıcı bulunamadı.</p>
+  </ng-template>
+
+</div>

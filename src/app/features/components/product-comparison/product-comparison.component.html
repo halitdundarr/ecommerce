@@ -1,0 +1,85 @@
+<div class="comparison-container">
+  <h2>Ürün Karşılaştırma</h2>
+
+  <ng-container *ngIf="(comparisonList$ | async) as list; else loading">
+    <div *ngIf="list.length > 0; else emptyList" class="comparison-table-container">
+
+      <button class="clear-all-btn" (click)="clearComparison()" *ngIf="list.length > 1">
+        Listeyi Temizle
+      </button>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th class="feature-header">Özellik</th>
+            <th *ngFor="let product of list" class="product-header">
+              <button class="remove-product-btn" (click)="removeFromComparison(product.id)" title="Karşılaştırmadan Kaldır">
+                &times; </button>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="feature-row image-row">
+            <td class="feature-name">Görsel</td>
+            <td *ngFor="let product of list" class="product-cell">
+              <a [routerLink]="['/products/detail', product.id]">
+                <img [src]="getProductFeature(product, 'imageUrl') || 'https://via.placeholder.com/100?text=?'"
+                     [alt]="getProductFeature(product, 'name')">
+              </a>
+            </td>
+          </tr>
+          <tr class="feature-row name-row">
+            <td class="feature-name">Ürün Adı</td>
+            <td *ngFor="let product of list" class="product-cell">
+              <a [routerLink]="['/products/detail', product.id]">
+                {{ getProductFeature(product, 'name') }}
+              </a>
+            </td>
+          </tr>
+          <tr class="feature-row price-row">
+            <td class="feature-name">Fiyat</td>
+            <td *ngFor="let product of list" class="product-cell price-cell">
+              {{ getProductFeature(product, 'price') | currency:'TRY':'symbol':'1.2-2' }}
+            </td>
+          </tr>
+          <tr class="feature-row rating-row">
+            <td class="feature-name">Ortalama Puan</td>
+            <td *ngFor="let product of list" class="product-cell rating-cell">
+              <span *ngIf="getProductFeature(product, 'averageRating') as rating">
+                ⭐ {{ rating | number:'1.1-1' }} / 5
+              </span>
+              <span *ngIf="!getProductFeature(product, 'averageRating')">
+                Puanlanmamış
+              </span>
+            </td>
+          </tr>
+          <tr class="feature-row category-row">
+            <td class="feature-name">Kategori</td>
+            <td *ngFor="let product of list" class="product-cell">
+              {{ getCategoryName(getProductFeature(product, 'category')) }}
+            </td>
+          </tr>
+
+          <tr class="feature-row action-row">
+            <td class="feature-name"></td>
+            <td *ngFor="let product of list" class="product-cell">
+              <button class="add-to-cart-small-btn">Sepete Ekle (TODO)</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <ng-template #emptyList>
+      <div class="empty-comparison">
+        <p>Karşılaştırma listenizde ürün bulunmamaktadır.</p>
+        <a routerLink="/products">Ürünlere Göz Atın</a>
+      </div>
+    </ng-template>
+  </ng-container>
+
+  <ng-template #loading>
+    <p>Karşılaştırma listesi yükleniyor...</p>
+  </ng-template>
+
+</div>

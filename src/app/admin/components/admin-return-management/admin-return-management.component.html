@@ -1,0 +1,70 @@
+<div class="return-management-container">
+  <h3>İade Talebi Yönetimi</h3>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="actionError" class="error-message action-error">{{ actionError }}</div>
+  <div *ngIf="error && !isLoading" class="error-message general-error">{{ error }}</div>
+
+
+  <ng-container *ngIf="(returnRequests$ | async) as requests; else loadErrorOrEmpty">
+     <div *ngIf="requests.length > 0; else noRequests" class="return-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Talep No</th>
+              <th>Sipariş No</th>
+              <th>Kullanıcı ID</th>
+              <th>Ürün</th>
+              <th>Neden</th>
+              <th>Talep Tarihi</th>
+              <th>Durum</th>
+              <th>Aksiyonlar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of requests">
+              <td>{{ req.returnId }}</td>
+              <td>
+                  <a [routerLink]="['/buyer/orders', req.orderId]" target="_blank">{{ req.orderId }}</a>
+              </td>
+               <td>{{ req.userId || 'N/A' }}</td> <td>{{ req.productName }} <small>(#{{ req.orderItemId }})</small></td>
+               <td>{{ req.reason }}</td>
+               <td>{{ req.requestDate | date:'dd.MM.yyyy HH:mm' }}</td>
+               <td>
+                 <span class="status-badge" [ngClass]="getStatusClass(req.status)">
+                   {{ req.status }}
+                 </span>
+               </td>
+              <td class="actions">
+                 <ng-container *ngIf="req.status === 'REQUESTED'">
+                    <button class="action-btn approve-btn"
+                            (click)="approveReturn(req.returnId)"
+                            [disabled]="actionLoading[req.returnId.toString()]"
+                            title="Onayla">
+                        {{ actionLoading[req.returnId.toString()] ? '...' : 'Onayla' }} 👍
+                    </button>
+                    <button class="action-btn reject-btn"
+                            (click)="rejectReturn(req.returnId)"
+                            [disabled]="actionLoading[req.returnId.toString()]"
+                            title="Reddet">
+                         {{ actionLoading[req.returnId.toString()] ? '...' : 'Reddet' }} 👎
+                    </button>
+                 </ng-container>
+                  <span *ngIf="req.status !== 'REQUESTED'">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+     </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+           <ng-container *ngTemplateOutlet="noRequests"></ng-container>
+      </div>
+  </ng-template>
+  <ng-template #noRequests>
+      <p class="no-requests">Gösterilecek iade talebi bulunamadı.</p>
+  </ng-template>
+
+</div>

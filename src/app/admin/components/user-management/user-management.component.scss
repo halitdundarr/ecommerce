@@ -1,0 +1,108 @@
+@use 'sass:math';
+// Merkezi değişkenleri import edin: @use '../../../styles/variables' as *;
+$border-color: #dee2e6;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$warning-color: #ffc107;
+$info-color: #17a2b8;
+$primary-color: #007bff; // Admin rolü için
+$success-color: #28a745; // Aktif durum için
+$secondary-color: #6c757d; // <<<--- EKLENDİ (Gri tonu, text-muted ile aynı)
+
+.user-management-container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+  }
+}
+
+ .loading-indicator, .error-message, .no-users {
+    text-align: center;
+    padding: 1.5rem;
+    color: $text-color-muted;
+ }
+ .error-message { color: $danger-color; }
+
+.user-table-container {
+    overflow-x: auto; // Küçük ekranlarda tabloyu kaydırılabilir yap
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 600; // Daha kalın başlık
+    background-color: #f8f9fa;
+    color: #495057;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1; // Satır üzerine gelince hafif arkaplan
+  }
+
+  .role-badge, .status-badge {
+      padding: 0.25em 0.6em;
+      font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 10px;
+      color: white;
+      text-transform: uppercase;
+      white-space: nowrap; // Taşmayı önle
+
+      &.role-admin { background-color: $primary-color;}
+      &.role-seller { background-color: $info-color;}
+      &.role-customer { background-color: $text-color-muted;}
+
+      &.status-active { background-color: $success-color;}
+      &.status-banned { background-color: $danger-color;}
+  }
+
+  // user-management.component.scss içinde .actions bloğunu güncelleyin
+
+  .actions {
+    white-space: nowrap;
+    button {
+        font-size: 0.8em; // Biraz küçültebiliriz
+        padding: 0.3rem 0.6rem;
+        margin-right: 0.5rem;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        color: white;
+        transition: background-color 0.2s, opacity 0.2s; // Opacity ekle
+        &:last-child { margin-right: 0;}
+        &:disabled { // Disabled durumu için genel stil
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+    .ban-btn { background-color: $warning-color; &:hover:not(:disabled){background-color: darken($warning-color, 10%);}}
+    .unban-btn { background-color: $success-color; &:hover:not(:disabled){background-color: darken($success-color, 10%);}}
+
+    // --- YENİ BUTON STİLLERİ ---
+    .reset-pwd-btn {
+        background-color: $info-color; // Mavi tonu
+        &:hover:not(:disabled){ background-color: darken($info-color, 10%); }
+    }
+    .view-transactions-btn {
+        background-color: $secondary-color; // Gri tonu
+        &:hover:not(:disabled){ background-color: darken($secondary-color, 10%); }
+    }
+    // --- ---
+}
+}

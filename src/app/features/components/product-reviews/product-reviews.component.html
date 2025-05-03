@@ -1,0 +1,33 @@
+<div class="reviews-section">
+  <h4>Müşteri Yorumları</h4>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+
+  <div *ngIf="errorMessage && !isLoading" class="error-message">
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage">
+    <div *ngIf="(reviews$ | async) as reviews; else noReviews">
+      <ul class="review-list" *ngIf="reviews.length > 0; else noReviews">
+        <li *ngFor="let review of reviews" class="review-item">
+          <div class="review-header">
+            <span class="user-name">{{ review.userName }}</span>
+            <span class="rating">
+              <ng-container *ngFor="let i of [].constructor(review.rating)">⭐</ng-container>
+              <ng-container *ngFor="let i of [].constructor(5 - review.rating)">☆</ng-container>
+              ({{ review.rating }}/5)
+            </span>
+            <span class="date">{{ review.createdAt | date:'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+          <p class="comment">{{ review.comment }}</p>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <ng-template #noReviews>
+      <p *ngIf="!isLoading && !errorMessage">Bu ürün için henüz yorum yapılmamış.</p>
+  </ng-template>
+
+</div>

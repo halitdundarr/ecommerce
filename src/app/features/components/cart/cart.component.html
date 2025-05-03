@@ -1,0 +1,82 @@
+<div class="cart-page-container">
+  <h2>Alışveriş Sepetim</h2>
+
+  <ng-container *ngIf="cart$ | async as cart; else loadingOrError">
+
+    <div *ngIf="!cart || cart.items.length === 0; else cartContent" class="empty-cart">
+      <p>Alışveriş sepetiniz boş.</p>
+      <a routerLink="/products">Alışverişe Başla</a>
+    </div>
+
+    <ng-template #cartContent>
+      <div class="cart-layout">
+
+        <div class="cart-items">
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">Ürün</th>
+                <th>Fiyat</th>
+                <th>Miktar</th>
+                <th>Toplam</th>
+                <th></th> </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of cart.items" class="cart-item">
+                <td class="item-image">
+                  <img [src]="item.product.imageUrl || 'https://via.placeholder.com/60?text=Resim'"
+                       [alt]="item.product.name"> </td>
+                <td class="item-name">
+                  <a [routerLink]="['/products/detail', item.productId]">{{ item.product.name }}</a>
+                </td>
+                <td class="item-price">
+                  {{ item.unitPrice | currency:'TRY':'symbol':'1.2-2' }}
+                </td>
+                <td class="item-quantity">
+                  <div class="quantity-control">
+                    <button type="button" (click)="decrementQuantity(item)" aria-label="Azalt">-</button>
+                    <input
+                      type="number"
+                      min="0"
+                      [value]="item.quantity"
+                      (change)="updateQuantityFromInput(item, $event)" aria-label="Miktar">
+                     <button type="button" (click)="incrementQuantity(item)" aria-label="Artır">+</button>
+                  </div>
+                </td>
+                <td class="item-total-price">
+                  {{ item.totalPrice | currency:'TRY':'symbol':'1.2-2' }}
+                </td>
+                <td class="item-remove">
+                   <button (click)="removeFromCart(item)" title="Ürünü Kaldır" aria-label="Ürünü Kaldır">
+                    <i class="icon-trash">🗑️</i> </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="cart-summary">
+           <h4>Sipariş Özeti</h4>
+            <div class="summary-row">
+                <span>Ürünler Toplamı ({{ cart.totalItems }} ürün)</span>
+                <span>{{ cart.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="summary-row total">
+                <span>Toplam Tutar</span>
+                <span>{{ cart.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="cart-actions">
+                <button class="clear-cart-btn" (click)="clearCart()">Sepeti Boşalt</button>
+                <button class="checkout-btn" routerLink="/checkout">Alışverişi Tamamla</button>
+            </div>
+        </div>
+
+      </div> </ng-template>
+
+  </ng-container>
+
+  <ng-template #loadingOrError>
+    <p>Sepet yükleniyor veya bir hata oluştu...</p>
+    </ng-template>
+
+</div>

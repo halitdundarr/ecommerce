@@ -1,0 +1,56 @@
+<div class="order-management-container">
+  <h3>Sipariş Yönetimi</h3>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(orders$ | async) as orders; else loadErrorOrEmpty">
+    <div *ngIf="orders.length > 0; else noOrders" class="order-table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Sipariş No</th>
+            <th>Müşteri ID</th> <th>Tarih</th>
+            <th>Tutar</th>
+            <th>Durum</th>
+            <th>Aksiyonlar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of orders">
+            <td>{{ order.id }}</td>
+            <td>{{ order.userId }}</td> <td>{{ order.orderDate | date:'dd.MM.yyyy HH:mm' }}</td>
+            <td>{{ order.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(order.status)">
+                {{ order.status }}
+              </span>
+              <div *ngIf="order.shipments && order.shipments.length > 0" class="shipment-info">
+                   <small>Takip No: {{ order.shipments[0]?.trackingNumber }} ({{ order.shipments[0]?.carrier }})</small>
+               </div>
+            </td>
+            <td class="actions">
+              <button class="action-btn view-btn"
+                      (click)="viewOrderDetails(order.id)"
+                      title="Detayları Gör"
+                      [disabled]="actionLoading[order.id.toString()]">👁️</button> <button *ngIf="order.status === 'PROCESSING'"
+                      class="action-btn update-btn"
+                      title="Kargoya Verildi İşaretle"
+                      (click)="markAsShipped(order)"
+                      [disabled]="actionLoading[order.id.toString()]"> <span *ngIf="!actionLoading[order.id.toString()]">🚚</span> <span *ngIf="actionLoading[order.id.toString()]">...</span> </button>
+
+              </td>
+          </tr> </tbody>
+      </table>
+    </div> </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+            <ng-container *ngTemplateOutlet="noOrders"></ng-container>
+      </div>
+       </ng-template>
+  <ng-template #noOrders>
+      <p class="no-orders">Gösterilecek sipariş bulunamadı.</p>
+  </ng-template>
+
+</div>

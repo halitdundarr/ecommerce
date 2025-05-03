@@ -1,0 +1,291 @@
+// İlgili Sass modüllerini import et
+@use 'sass:math';
+@use 'sass:color';
+
+// Değişkenler
+$primary-color: #ff6000;
+$border-color: #dee2e6;
+$selected-border-color: $primary-color;
+// lighten yerine color.adjust kullanmak daha modern: color.adjust($primary-color, $lightness: 45%)
+$selected-bg-color: lighten($primary-color, 45%);
+$spacing-unit: 1rem;
+$text-color-dark: #343a40;
+$text-color-muted: #6c757d; // <<<--- BU TANIM VAR MI VE DOĞRU MU YAZILMIŞ?
+$danger-color: #dc3545;
+$success-color: #28a745;
+$link-color: #007bff;
+
+.checkout-container {
+  max-width: 800px; // İçeriği sınırla
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+  h2, h4 {
+    color: $text-color-dark;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid $border-color;
+  }
+  h4 { font-size: 1.1em; margin-top: 1.5rem;}
+}
+
+.loading-indicator, .error-message {
+    padding: 1rem;
+    text-align: center;
+    color: #6c757d;
+}
+.error-message { color: $danger-color;}
+
+.address-list {
+  margin-bottom: 1.5rem;
+
+  .addresses {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); // Duyarlı grid
+    gap: $spacing-unit;
+  }
+
+  .address-card {
+    border: 2px solid $border-color;
+    border-radius: 5px;
+    padding: $spacing-unit;
+    cursor: pointer;
+    transition: border-color 0.2s, background-color 0.2s;
+    font-size: 0.9em;
+    line-height: 1.5;
+
+    &:hover {
+      border-color: darken($border-color, 15%);
+    }
+
+    &.selected {
+      border-color: $selected-border-color;
+      background-color: $selected-bg-color;
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+    }
+
+    strong { display: block; margin-bottom: 0.3rem; font-size: 1.05em; }
+    span { font-weight: bold; color: $primary-color; margin-left: 5px;}
+  }
+}
+
+.new-address-section {
+  margin-bottom: 1.5rem;
+  button[type="button"] { // Yeni adres ekle butonu
+      cursor: pointer;
+      background: none;
+      border: 1px dashed $primary-color;
+      color: $primary-color;
+      padding: 0.6rem 1rem;
+      border-radius: 4px;
+      transition: background-color 0.2s, color 0.2s;
+      &:hover { background-color: lighten($primary-color, 40%);}
+      i { margin-right: 5px;}
+  }
+}
+
+.new-address-form {
+  border: 1px solid $border-color;
+  padding: 1.5rem;
+  border-radius: 5px;
+  margin-top: 1rem;
+  background-color: #fdfdfd;
+
+  form { display: flex; flex-direction: column; gap: 1rem;}
+
+  .form-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap; // Küçük ekranda alt alta geçebilir
+      .form-group {
+         flex: 1; // Alanları eşit dağıtmaya çalış
+         min-width: 150px; // Minimum genişlik
+         display: flex;
+         flex-direction: column;
+         gap: 0.3rem;
+          &.full-width { flex-basis: 100%;}
+          label { font-size: 0.85em; font-weight: 500;}
+          input[type="text"], input[type="tel"] {
+              padding: 0.6rem;
+              border: 1px solid $border-color;
+              border-radius: 4px;
+              font-size: 0.95em;
+              &:focus { outline: none; border-color: $primary-color;}
+          }
+      }
+  }
+
+  .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+      button {
+          padding: 0.7rem 1.2rem;
+          border-radius: 4px;
+          cursor: pointer;
+          border: none;
+          font-weight: 500;
+      }
+      button[type="submit"] {
+          background-color: $success-color;
+          color: white;
+           &:disabled { background-color: #aaa; cursor: not-allowed;}
+           &:hover:not(:disabled) { background-color: color.adjust($success-color, $lightness: -10%);}
+      }
+      .cancel-btn {
+          background-color: #6c757d;
+          color: white;
+           &:hover { background-color: color.adjust(#6c757d, $lightness: -10%);}
+      }
+  }
+}
+
+.checkout-actions {
+    margin-top: 2rem;
+    text-align: right; // Butonu sağa yasla
+    button {
+        padding: 0.8rem 2rem;
+        font-size: 1.1em;
+        background-color: $primary-color;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s, opacity 0.2s;
+        &:disabled { background-color: #aaa; cursor: not-allowed; opacity: 0.7;}
+        &:hover:not(:disabled) { background-color: color.adjust($primary-color, $lightness: -10%);}
+    }
+     .error-message { text-align: right; margin-top: 0.5rem;}
+}
+
+// Placeholder ikonlar
+.icon-plus::before { content: '+'; margin-right: 4px; font-weight: bold;}
+
+
+
+.checkout-section {
+  margin-bottom: 2rem; // Bölümler arası boşluk
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid $border-color; // Bölümleri ayır
+  &:last-of-type {
+      border-bottom: none; // Son bölümün alt çizgisini kaldır
+  }
+}
+
+// Ödeme Yöntemleri
+.payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-unit;
+
+  .payment-method-card {
+    border: 2px solid $border-color;
+    border-radius: 5px;
+    padding: $spacing-unit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    transition: border-color 0.2s, background-color 0.2s;
+    min-width: 180px; // Minimum genişlik
+
+    &:hover {
+      border-color: darken($border-color, 20%);
+    }
+
+    &.selected {
+      border-color: $primary-color;
+      background-color: $selected-bg-color; // Adres kartıyla aynı
+      box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+    }
+
+    i { // İkonlar için placeholder
+      font-size: 1.5em; // İkon boyutu
+      color: $primary-color; // İkon rengi
+    }
+    span { font-weight: 500; }
+  }
+   .credit-card-form-placeholder {
+       border: 1px dashed $border-color;
+       padding: 1rem;
+       margin-top: 1rem;
+       flex-basis: 100%; // Tam genişlik
+       color: $text-color-muted;
+       text-align: center;
+   }
+}
+
+// Sipariş Özeti
+.order-summary-section {
+   .summary-details {
+       font-size: 0.95em;
+       hr { margin: 1rem 0; border: 0; border-top: 1px solid $border-color;}
+   }
+   .summary-item-list {
+       list-style: none;
+       padding: 0;
+       margin: 0 0 1rem 0;
+       li {
+           display: flex;
+           justify-content: space-between;
+           margin-bottom: 0.5rem;
+           font-size: 0.9em;
+           span:first-child { color: $text-color-muted; }
+           span:last-child { font-weight: 500; }
+       }
+   }
+   .summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+      span:first-child { color: $text-color-muted; }
+      span:last-child { font-weight: 500; }
+
+      &.total {
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid $border-color;
+        span:first-child { color: $text-color-dark;}
+        span:last-child { color: $primary-color;}
+      }
+    }
+}
+
+// Sipariş/Ödeme Hata Mesajı
+.final-error {
+    text-align: center;
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+    background-color: lighten($danger-color, 35%);
+    border: 1px solid lighten($danger-color, 20%);
+    border-radius: 4px;
+}
+
+// Checkout Aksiyonları (Siparişi Ver Butonu)
+.checkout-actions {
+    margin-top: 1rem; // Sipariş özeti ile arası
+    text-align: center; // Butonu ortala
+    button {
+        padding: 0.8rem 2.5rem; // Daha büyük buton
+        font-size: 1.2em; // Daha büyük font
+        background-color: $success-color; // Yeşil buton
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s, opacity 0.2s;
+        &:disabled { background-color: #aaa; cursor: not-allowed; opacity: 0.7;}
+        &:hover:not(:disabled) { background-color: color.adjust($success-color, $lightness: -10%);}
+    }
+}
+
+// Placeholder İkonlar (Ödeme Yöntemleri İçin)
+// Gerçek ikonlar kullanılmalı
+.icon-payment-credit_card::before { content: '💳';}
+.icon-payment-bank_transfer::before { content: '🏦';}
+.icon-payment-paypal::before { content: '🅿️';}

@@ -1,0 +1,91 @@
+// Değişkenler (Örnek)
+$primary-color: #ff6000;
+$star-color: #f8b400;
+$border-color: #ccc;
+$error-color: #dc3545;
+$button-bg: #007bff;
+
+.add-review-container {
+  border: 1px solid #eee;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+
+  h5 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-weight: 500;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+
+  label {
+    font-weight: 500;
+    font-size: 0.9em;
+  }
+
+  textarea {
+    padding: 0.7rem;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    font-size: 0.95em;
+    resize: vertical;
+    min-height: 80px;
+    &:focus { outline: none; border-color: $primary-color; }
+    &.is-invalid { border-color: $error-color; }
+  }
+
+  .invalid-feedback {
+    color: $error-color;
+    font-size: 0.8em;
+  }
+}
+
+.rating-group {
+  .stars {
+    display: flex;
+    gap: 0.2rem;
+    .star-button {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 1.8em; // Yıldız boyutu
+      cursor: pointer;
+      color: #ddd; // Boş yıldız rengi
+      transition: color 0.2s, transform 0.1s;
+      &:hover {
+         transform: scale(1.1);
+      }
+      &.selected {
+        color: $star-color; // Dolu yıldız rengi
+      }
+    }
+  }
+}
+
+
+.error-message { /* ... hata mesajı stili ... */ }
+
+.form-actions {
+  text-align: right;
+  button {
+    padding: 0.7rem 1.5rem;
+    background-color: $button-bg;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    &:disabled { background-color: #aaa; cursor: not-allowed;}
+  }
+}

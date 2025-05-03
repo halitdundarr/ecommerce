@@ -1,0 +1,62 @@
+<div class="search-results-container">
+  <h2 *ngIf="(searchTerm$ | async) as term; else searching">
+    Arama Sonuçları: "{{ term }}"
+  </h2>
+  <ng-template #searching><h2>Aranıyor...</h2></ng-template>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(results$ | async) as results; else loadError">
+    <div *ngIf="!isLoading && !error">
+      <div class="product-grid" *ngIf="results.length > 0; else noResults">
+        <div class="product-card" *ngFor="let product of results">
+           <div class="wishlist-icon-container">
+            <button
+                type="button"
+                class="wishlist-btn"
+                [class.in-wishlist]="isProductInWishlist(product.id)"
+                (click)="addToWishlist(product)"
+                [title]="isProductInWishlist(product.id) ? 'İstek Listesinden Çıkar (TODO)' : 'İstek Listesine Ekle'">
+                <i [class]="isProductInWishlist(product.id) ? 'icon-heart-filled' : 'icon-heart-empty'">
+                  {{ isProductInWishlist(product.id) ? '❤️' : '🤍' }}
+                </i>
+            </button>
+          </div>
+          <div class="compare-icon-container">
+            <button
+                type="button"
+                class="compare-btn"
+                [class.in-comparison]="isProductInComparison(product.id)"
+                (click)="toggleComparison(product)"
+                [disabled]="!isProductInComparison(product.id) && !canAddToComparison()"
+                [title]="isProductInComparison(product.id) ? 'Karşılaştırmadan Çıkar' : (!canAddToComparison() ? 'Liste Dolu' : 'Karşılaştırmaya Ekle')">
+                <i class="icon-compare">
+                   {{ isProductInComparison(product.id) ? '✅' : '⚖️' }}
+                </i>
+            </button>
+          </div>
+          <img [src]="product.imageUrl || 'https://via.placeholder.com/150?text=Resim+Yok'"
+               [alt]="product.name">
+          <h3>
+            <a [routerLink]="['../detail', product.id]">{{ product.name }}</a>
+          </h3>
+          <p class="price">{{ product.price | currency:'TRY':'symbol':'1.2-2' }}</p>
+          <div class="rating" *ngIf="product.averageRating">
+            <span>⭐ {{ product.averageRating | number:'1.1-1' }}</span>
+          </div>
+          <button (click)="addToCart(product)">Sepete Ekle</button>
+        </div>
+        </div>
+      <ng-template #noResults>
+         <p class="no-results">"'{{ searchTerm$ | async }}'" için sonuç bulunamadı.</p>
+      </ng-template>
+    </div>
+  </ng-container>
+
+  <ng-template #loadError>
+     <div *ngIf="!isLoading && error">
+       </div>
+   </ng-template>
+
+</div>

@@ -1,0 +1,131 @@
+// Gerekli değişkenleri import edebilir veya burada tanımlayabilirsiniz
+$primary-color: #ff6000;
+$border-color: #e0e0e0;
+$text-color-dark: #333;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$link-color: #007bff;
+$spacing-unit: 1rem;
+
+.wishlist-container {
+  max-width: 1200px;
+  margin: 1.5rem auto;
+  padding: 1rem;
+
+  h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 500;
+  }
+}
+
+.empty-wishlist {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed $border-color;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+
+  p {
+    font-size: 1.2em;
+    margin-bottom: 1rem;
+    color: $text-color-muted;
+  }
+
+  a {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: darken($primary-color, 10%);
+    }
+  }
+}
+
+.loading-placeholder {
+    text-align: center;
+    padding: 2rem;
+    color: $text-color-muted;
+    font-style: italic;
+}
+
+.wishlist-grid {
+  display: grid;
+  // Küçük ekranlarda tek sütun, büyüdükçe artan sütun sayısı
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem; // Kartlar arası boşluk
+}
+
+.wishlist-item-card {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  background-color: #fff;
+  align-items: flex-start; // Öğeleri yukarı hizala
+
+  .item-image {
+    flex-shrink: 0; // Resim küçülmesin
+    img {
+      width: 80px; // Sabit genişlik
+      height: 80px;
+      object-fit: contain; // Orantıyı koru
+      border: 1px solid $border-color;
+      border-radius: 4px;
+    }
+  }
+
+  .item-details {
+    flex-grow: 1; // Kalan alanı doldur
+    .item-name a {
+      font-weight: 500;
+      color: $text-color-dark;
+      &:hover { color: $link-color; }
+    }
+    .item-price {
+      font-weight: bold;
+      color: $primary-color;
+      margin: 0.3rem 0;
+    }
+    .added-date {
+      font-size: 0.8em;
+      color: $text-color-muted;
+    }
+  }
+
+  .item-actions {
+    display: flex;
+    flex-direction: column; // Butonları alt alta
+    align-items: flex-end; // Sağa yasla
+    gap: 0.5rem;
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: $danger-color;
+      cursor: pointer;
+      font-size: 0.85em;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+      &:hover { opacity: 1; }
+      i { font-size: 1.1em; vertical-align: middle; margin-left: 3px; }
+    }
+    // Opsiyonel Sepete Ekle butonu stili
+    // .add-to-cart-btn { ... }
+  }
+
+  // Küçük ekranlar için kart düzenlemesi (opsiyonel)
+  @media (max-width: 480px) {
+    flex-direction: column; // Tamamen alt alta
+    align-items: center; // Ortala
+    text-align: center;
+    .item-details { margin-bottom: 0.5rem;}
+    .item-actions { align-items: center;}
+  }
+}

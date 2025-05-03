@@ -1,0 +1,87 @@
+<div class="product-detail-container">
+  <button routerLink="/products" class="back-button">&larr; Ürün Listesi</button>
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+
+  <div *ngIf="error && !isLoading" class="error-message">
+    <p>{{ error }}</p>
+    <a routerLink="/products">Ürün Listesine Dön</a>
+  </div>
+
+  <ng-container *ngIf="(product$ | async) as product; else notFoundOrLoading">
+    <div *ngIf="product && !isLoading && !error">
+
+      <div class="product-layout">
+
+        <div class="product-gallery">
+          <img [src]="mainImageUrl || 'https://via.placeholder.com/450?text=Resim+Yok'"
+               [alt]="product?.name"
+               class="main-image">
+          <div class="thumbnails" *ngIf="product?.images as images">
+             <ng-container *ngIf="images && images.length > 1">
+                <img *ngFor="let img of images"
+                     [src]="img.imageUrl"
+                     [alt]="img.altText || product?.name"
+                     (click)="changeMainImage(img.imageUrl)">
+            </ng-container>
+          </div>
+        </div>
+
+        <div class="product-info">
+          <h1>{{ product.name }}</h1>
+
+          <div class="rating" *ngIf="product.averageRating">
+            <span>⭐ {{ product.averageRating | number:'1.1-1' }}</span>
+            </div>
+
+          <p class="price">{{ product.price | currency:'TRY':'symbol':'1.2-2' }}</p>
+
+          <div class="stock-status" [ngClass]="{'in-stock': product.stockQuantity && product.stockQuantity > 0, 'out-of-stock': !product.stockQuantity || product.stockQuantity === 0}">
+              {{ (product.stockQuantity && product.stockQuantity > 0) ? 'Stokta Var' : 'Stokta Yok' }}
+              <span *ngIf="product.stockQuantity && product.stockQuantity < 10 && product.stockQuantity > 0"> (Son {{product.stockQuantity}} ürün!)</span>
+          </div>
+
+          <div class="actions">
+            <button
+                type="button"
+                class="cart-btn"
+                (click)="addToCart(product)"
+                [disabled]="!product.stockQuantity || product.stockQuantity === 0">
+              Sepete Ekle 🛒
+            </button>
+            <button
+            type="button"
+            class="wishlist-btn"
+            [class.in-wishlist]="isInWishlist$ | async" (click)="toggleWishlist(product)" [title]="(isInWishlist$ | async) ? 'İstek Listesinden Çıkar' : 'İstek Listesine Ekle'">
+            <i [class]="(isInWishlist$ | async) ? 'icon-heart-filled' : 'icon-heart-empty'">
+                {{ (isInWishlist$ | async) ? '❤️' : '🤍' }} </i>
+            <span *ngIf="(isInWishlist$ | async)">Listede</span>
+            <span *ngIf="!(isInWishlist$ | async)">Listeye Ekle</span>
+        </button>
+            </div>
+
+          <div class="attributes" *ngIf="product.attributes && product.attributes.length > 0">
+            <h4>Özellikler</h4>
+            <ul>
+              <li *ngFor="let attr of product.attributes">
+                <strong>{{ attr.name }}:</strong> {{ attr.value }}
+              </li>
+            </ul>
+          </div>
+
+           <div class="description">
+              <h4>Ürün Açıklaması</h4>
+              <p>{{ product.description }}</p>
+           </div>
+
+        </div> </div> <app-product-reviews [productId]="product.id"></app-product-reviews>
+
+    </div> </ng-container>
+
+  <ng-template #notFoundOrLoading>
+      <div *ngIf="!isLoading && !error">
+           <p>Ürün bulunamadı.</p>
+           <a routerLink="/products">Ürün Listesine Dön</a>
+      </div>
+       </ng-template>
+
+</div>

@@ -1,0 +1,48 @@
+<div class="return-history-container">
+  <h2>İade Taleplerim</h2>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(returnRequests$ | async) as requests; else loadError">
+    <div *ngIf="!isLoading && !error">
+      <div *ngIf="requests.length > 0; else noRequests" class="requests-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Talep No</th>
+              <th>Sipariş No</th>
+              <th>Ürün</th>
+              <th>Talep Tarihi</th>
+              <th>Neden</th>
+              <th>Durum</th>
+              </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let req of requests">
+              <td>{{ req.returnId }}</td>
+              <td><a [routerLink]="['/buyer/orders', req.orderId]">{{ req.orderId }}</a></td>
+              <td>{{ req.productName }} <small>(#{{ req.orderItemId }})</small></td>
+              <td>{{ req.requestDate | date:'dd.MM.yyyy HH:mm' }}</td>
+              <td>{{ req.reason }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(req.status)">
+                  {{ req.status }}
+                </span>
+              </td>
+              </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #noRequests>
+        <div class="no-requests">
+          <p>Henüz oluşturulmuş bir iade talebiniz bulunmamaktadır.</p>
+          </div>
+      </ng-template>
+    </div>
+  </ng-container>
+
+  <ng-template #loadError>
+    </ng-template>
+
+</div>

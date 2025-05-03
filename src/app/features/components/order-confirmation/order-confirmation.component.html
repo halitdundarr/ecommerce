@@ -1,0 +1,44 @@
+<div class="order-confirmation-container">
+  <div *ngIf="isLoading" class="loading-indicator">Yükleniyor...</div>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(order$ | async) as order; else notFound">
+    <div *ngIf="order && !isLoading && !error" class="confirmation-content">
+
+      <div class="success-icon">✅</div>
+      <h2>Siparişiniz Alındı!</h2>
+      <p>Teşekkür ederiz! Siparişiniz başarıyla oluşturuldu.</p>
+      <p>Sipariş Numaranız: <strong>#{{ order.id }}</strong></p>
+
+      <div class="order-summary">
+        <h4>Sipariş Özeti</h4>
+        <div class="summary-item" *ngFor="let item of order.items">
+          <span>{{ item.quantity }} x {{ item.product.name }}</span>
+          <span>{{ item.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+        </div>
+        <hr>
+        <div class="summary-total">
+          <span>Toplam Tutar:</span>
+          <strong>{{ order.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</strong>
+        </div>
+         <div class="shipping-info" *ngIf="order.shippingAddress as addr">
+            <h5>Teslimat Adresi</h5>
+            <address>
+                {{ addr.street }}<br>
+                {{ addr.postalCode }} {{ addr.city }} / {{ addr.country }}
+            </address>
+        </div>
+      </div>
+
+      <div class="confirmation-actions">
+        <a routerLink="/buyer/orders" class="btn btn-primary">Siparişlerim</a>
+        <a routerLink="/products" class="btn btn-secondary">Alışverişe Devam Et</a>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <ng-template #notFound>
+    <p *ngIf="!isLoading && !error">Sipariş bulunamadı veya yüklenemedi.</p>
+  </ng-template>
+</div>

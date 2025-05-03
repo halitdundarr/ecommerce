@@ -1,0 +1,121 @@
+<div class="list-layout">
+
+  <aside class="filters-sidebar">
+    <h4>Kategoriler</h4>
+    <div *ngIf="isLoadingCategories" class="loading-placeholder">Yükleniyor...</div>
+    <ng-container *ngIf="(categories$ | async) as categories; else categoryErrorOrEmpty">
+      <ul *ngIf="categories.length > 0; else noCategories">
+        <li [class.active]="selectedCategoryId === null">
+          <a (click)="selectCategory(null)" role="button" tabindex="0">Tüm Ürünler</a>
+        </li>
+        <li *ngFor="let category of categories" [class.active]="selectedCategoryId === category.id">
+          <a (click)="selectCategory(category.id)" role="button" tabindex="0">{{ category.name }}</a>
+        </li>
+      </ul>
+    </ng-container>
+    <ng-template #categoryErrorOrEmpty>
+      <div *ngIf="!isLoadingCategories">
+        <p>Kategori bulunamadı veya yüklenemedi.</p>
+      </div>
+    </ng-template>
+    <ng-template #noCategories>
+      <p>Gösterilecek kategori bulunamadı.</p>
+    </ng-template>
+    <div class="filter-section price-filter">
+        <h4>Fiyat Aralığı (TL)</h4>
+        <div class="price-inputs">
+            <input
+                #minPriceInput
+                type="number"
+                placeholder="Min"
+                [value]="minPrice"
+                min="0"
+                aria-label="Minimum Fiyat">
+            <span>-</span>
+            <input
+                #maxPriceInput
+                type="number"
+                placeholder="Max"
+                [value]="maxPrice"
+                min="0"
+                aria-label="Maksimum Fiyat">
+        </div>
+        <button
+            class="filter-apply-btn"
+            (click)="applyPriceFilter(minPriceInput.value, maxPriceInput.value)">
+            Filtrele
+        </button>
+    </div>
+    <div class="filter-section clear-filters" *ngIf="selectedCategoryId !== null || minPrice !== null || maxPrice !== null">
+         <button class="clear-all-btn" (click)="clearFilters()">
+             Tüm Filtreleri Temizle
+         </button>
+    </div>
+    </aside> <main class="product-list-container">
+     <h2>
+       Ürünler
+       <span *ngIf="selectedCategoryName"> - {{ selectedCategoryName }}</span>
+       <span class="active-filters" *ngIf="minPrice !== null || maxPrice !== null">
+          (Fiyat: {{ minPrice ?? '...' }} - {{ maxPrice ?? '...' }} TL)
+       </span>
+     </h2>
+
+     <app-loading-spinner *ngIf="isLoadingProducts"></app-loading-spinner>
+      <div *ngIf="error && !isLoadingProducts && !(products$ | async)?.length" class="error-message">
+           {{ error }}
+      </div>
+
+
+     <ng-container *ngIf="(products$ | async) as products; else productError">
+        <div class="product-grid" *ngIf="products.length > 0; else noProductsFound">
+            <div class="product-card" *ngFor="let product of products">
+              <div class="wishlist-icon-container">
+                <button
+                    type="button"
+                    class="wishlist-btn"
+                    [class.in-wishlist]="isProductInWishlist(product.id)" (click)="toggleWishlist(product)" [title]="isProductInWishlist(product.id) ? 'İstek Listesinden Çıkar' : 'İstek Listesine Ekle'">
+                    <i [class]="isProductInWishlist(product.id) ? 'icon-heart-filled' : 'icon-heart-empty'">
+                        {{ isProductInWishlist(product.id) ? '❤️' : '🤍' }}
+                    </i>
+                </button>
+            </div>
+                <div class="compare-icon-container">
+                     <button
+                         type="button"
+                         class="compare-btn"
+                         [class.in-comparison]="isProductInComparison(product.id)"
+                         (click)="toggleComparison(product)"
+                         [disabled]="!isProductInComparison(product.id) && !canAddToComparison()"
+                         [title]="isProductInComparison(product.id) ? 'Karşılaştırmadan Çıkar' : (!canAddToComparison() ? 'Liste Dolu' : 'Karşılaştırmaya Ekle')">
+                         <i class="icon-compare">
+                            {{ isProductInComparison(product.id) ? '✅' : '⚖️' }}
+                         </i>
+                     </button>
+                 </div>
+
+                <img [src]="product.imageUrl || 'https://via.placeholder.com/150?text=Resim+Yok'"
+                     [alt]="product.name">
+                <h3>
+                  <a [routerLink]="['../detail', product.id]">{{ product.name }}</a>
+                </h3>
+                <p class="price">{{ product.price | currency:'TRY':'symbol':'1.2-2' }}</p>
+                <div class="rating" *ngIf="product.averageRating">
+                  <span>⭐ {{ product.averageRating | number:'1.1-1' }}</span>
+                </div>
+                <button type="button" (click)="addToCart(product)">Sepete Ekle</button>
+            </div>
+        </div>
+        <ng-template #noProductsFound>
+          <div class="no-products">
+            <p>Bu kriterlere uygun ürün bulunamadı.</p>
+            <button class="clear-filters-inline-btn" (click)="clearFilters()" *ngIf="selectedCategoryId !== null || minPrice !== null || maxPrice !== null">
+                 Filtreleri Temizle
+             </button>
+          </div>
+        </ng-template>
+
+     </ng-container>
+      <ng-template #productError>
+         </ng-template>
+
+  </main> </div>

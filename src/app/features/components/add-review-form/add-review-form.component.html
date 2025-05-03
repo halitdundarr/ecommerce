@@ -1,0 +1,41 @@
+<div class="add-review-container">
+  <h5>Yorumunuzu Ekleyin</h5>
+  <form [formGroup]="reviewForm" (ngSubmit)="onSubmit()">
+
+    <div class="form-group rating-group">
+      <label>Puanınız*:</label>
+      <div class="stars">
+        <button type="button" *ngFor="let star of ratingOptions"
+        class="star-button"
+        [class.selected]="rating?.value === star"
+        (click)="selectRating(star)"
+        attr.aria-label="{{ star }} yıldız"> {{ rating?.value >= star ? '★' : '☆' }}
+</button>
+      </div>
+       <input type="hidden" formControlName="rating"> <div *ngIf="rating?.invalid && (rating?.dirty || rating?.touched)" class="invalid-feedback">
+        Lütfen 1 ile 5 arasında bir puan seçin.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="comment">Yorumunuz*:</label>
+      <textarea id="comment" formControlName="comment" rows="4"
+                placeholder="Ürün hakkındaki düşüncelerinizi yazın (en az 10 karakter)..."
+                [ngClass]="{ 'is-invalid': comment?.invalid && (comment?.dirty || comment?.touched) }"></textarea>
+      <div *ngIf="comment?.invalid && (comment?.dirty || comment?.touched)" class="invalid-feedback">
+        <div *ngIf="comment?.errors?.['required']">Yorum alanı zorunludur.</div>
+        <div *ngIf="comment?.errors?.['minlength']">Yorum en az 10 karakter olmalıdır.</div>
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" [disabled]="reviewForm.invalid || isLoading">
+        {{ isLoading ? 'Gönderiliyor...' : 'Yorumu Gönder' }}
+      </button>
+    </div>
+  </form>
+</div>

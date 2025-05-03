@@ -1,0 +1,105 @@
+// Gerekli değişkenler
+$border-color: #dee2e6;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$link-color: #007bff;
+$header-bg: #f8f9fa;
+
+// İade Durum Renkleri (Örnek)
+$status-requested: #17a2b8; // Info Mavi
+$status-approved: #28a745; // Success Yeşil
+$status-rejected: #dc3545; // Danger Kırmızı
+$status-processing: #ffc107; // Warning Sarı
+$status-completed: #6c757d; // Muted Gri (veya Koyu Yeşil)
+$status-cancelled: #adb5bd; // Açık Gri
+
+.return-history-container {
+  max-width: 1100px; // Biraz daha geniş olabilir
+  margin: 1.5rem auto;
+  padding: 1rem;
+
+  h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 500;
+  }
+}
+
+.loading-indicator, .error-message, .no-requests {
+    text-align: center;
+    padding: 2rem;
+    color: $text-color-muted;
+}
+.error-message { color: $danger-color; }
+.no-requests {
+    border: 1px dashed $border-color;
+    border-radius: 5px;
+    background-color: $header-bg;
+}
+
+.requests-table-container {
+    overflow-x: auto; // Yatay scroll
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle;
+  }
+
+  th {
+    font-weight: 600;
+    background-color: $header-bg;
+    color: #495057;
+    white-space: nowrap;
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1;
+  }
+
+  td {
+     a { // Sipariş No linki
+         color: $link-color;
+         text-decoration: none;
+         &:hover { text-decoration: underline;}
+     }
+     small { // Ürün ID'si için
+         color: $text-color-muted;
+         font-size: 0.9em;
+         margin-left: 4px;
+     }
+  }
+
+  // Durum Badge Stilleri
+  .status-badge {
+      padding: 0.25em 0.6em;
+      font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 10px;
+      color: white;
+      text-transform: uppercase; // Veya capitalize()
+      white-space: nowrap;
+
+      &.status-requested { background-color: $status-requested; }
+      &.status-approved { background-color: $status-approved; }
+      &.status-rejected { background-color: $status-rejected; }
+      &.status-processing { background-color: $status-processing; color: #333; }
+      &.status-completed { background-color: $status-completed; }
+      &.status-cancelled { background-color: $status-cancelled; }
+  }
+
+  // Aksiyonlar sütunu (ileride)
+  .actions button {
+      font-size: 0.85em;
+      padding: 0.3rem 0.7rem;
+      // ... diğer stiller ...
+  }
+}

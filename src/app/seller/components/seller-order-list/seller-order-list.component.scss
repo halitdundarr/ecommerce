@@ -1,0 +1,122 @@
+// Gerekirse merkezi değişkenleri import edin: @use '../../../styles/variables' as *;
+// Veya değişkenleri burada tanımlayın:
+$border-color: #dee2e6;
+$text-color-muted: #6c757d;
+$danger-color: #dc3545;
+$primary-color: #007bff; // View Butonu
+$success-color: #28a745; // Ship Butonu için olabilir
+$link-color: #007bff;
+$status-delivered: #28a745;
+$status-shipped: #17a2b8;
+$status-processing: #ffc107;
+$status-cancelled: #dc3545;
+$status-pending: #6c757d;
+
+// Ana Kapsayıcı
+.seller-order-list-container {
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+  }
+}
+
+// Yükleniyor, Hata, Boş Liste Mesajları
+.loading-indicator, .error-message, .no-orders {
+    text-align: center;
+    padding: 1.5rem;
+    color: $text-color-muted;
+ }
+.error-message { color: $danger-color; }
+.no-orders { font-style: italic; }
+
+// Tablo Kapsayıcı (Yatay Kaydırma için)
+.order-table-container {
+    overflow-x: auto;
+}
+
+// Sipariş Tablosu
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+
+  th, td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid $border-color;
+    font-size: 0.9em;
+    vertical-align: middle; // İçeriği dikey ortala
+  }
+
+  th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    color: #495057;
+    white-space: nowrap; // Başlıklar alt satıra düşmesin
+  }
+
+  tbody tr:hover {
+    background-color: #f1f1f1; // Satır üzerine gelince renk değişimi
+  }
+
+  // Ürün Bilgisi Sütunu İçin Ek Stil
+  .product-info {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem; // Resim ve yazı arası boşluk
+  }
+
+  // Küçük Ürün Resmi
+  .product-thumbnail {
+      width: 40px;
+      height: 40px;
+      object-fit: contain;
+      border: 1px solid $border-color;
+      border-radius: 3px;
+      background-color: #fff;
+      flex-shrink: 0; // Küçülmesin
+  }
+
+  // Durum Badge'i (Admin/Buyer ile aynı)
+  .status-badge {
+      padding: 0.25em 0.6em;
+      font-size: 0.8em;
+      font-weight: bold;
+      border-radius: 10px;
+      color: white;
+      text-transform: uppercase;
+      white-space: nowrap;
+
+      &.status-delivered { background-color: $status-delivered; }
+      &.status-shipped { background-color: $status-shipped; }
+      &.status-processing { background-color: $status-processing; color: #333; }
+      &.status-cancelled { background-color: $status-cancelled; }
+      &.status-pending { background-color: $status-pending; }
+  }
+
+  // Aksiyon Butonları
+  .actions {
+      white-space: nowrap;
+      button {
+          font-size: 1.1em;
+          padding: 0.3rem;
+          margin-right: 0.5rem;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          background: none;
+          line-height: 1;
+          vertical-align: middle;
+          transition: color 0.2s;
+          &:last-child { margin-right: 0;}
+      }
+      // İkon renkleri ve hover efektleri
+      .view-btn { color: $primary-color; &:hover{color: darken($primary-color, 15%);}}
+      .ship-btn { color: $success-color; &:hover{color: darken($success-color, 15%);}} // Kargoya ver butonu
+  }
+}

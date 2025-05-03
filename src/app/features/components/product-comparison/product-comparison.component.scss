@@ -1,0 +1,174 @@
+// Gerekli değişkenler
+$primary-color: #ff6000;
+$border-color: #e0e0e0;
+$header-bg: #f8f9fa;
+$text-color-dark: #333;
+$text-color-muted: #6c757d;
+$link-color: #007bff;
+$danger-color: #dc3545;
+$rating-color: #f8b400;
+$spacing-unit: 1rem;
+
+.comparison-container {
+  max-width: 1400px; // Geniş ekranlar için daha fazla yer
+  margin: 1.5rem auto;
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 500;
+  }
+}
+
+.empty-comparison {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed $border-color;
+  border-radius: 8px;
+  background-color: #f8f9fa;
+
+  p {
+    font-size: 1.2em;
+    margin-bottom: 1rem;
+    color: $text-color-muted;
+  }
+
+  a {
+    display: inline-block;
+    padding: 0.8rem 1.5rem;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: darken($primary-color, 10%);
+    }
+  }
+}
+
+.comparison-table-container {
+    overflow-x: auto; // Tablo taşarsa yatay scroll çıksın
+}
+
+.clear-all-btn {
+    display: block;
+    margin-left: auto;
+    margin-bottom: 1rem;
+    background-color: lighten($danger-color, 10%);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+    &:hover {
+        background-color: $danger-color;
+    }
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; // Sütun genişliklerini eşitlemeye yardımcı olur
+
+  th, td {
+    border: 1px solid $border-color;
+    padding: 0.8rem;
+    text-align: center; // İçerik ortalansın
+    vertical-align: top; // Üstten hizala
+    font-size: 0.9em;
+  }
+
+  // Başlık Satırı
+  thead th {
+    background-color: $header-bg;
+    font-weight: 600;
+    min-width: 150px; // Ürün sütunları için minimum genişlik
+    position: relative; // Kaldır butonu için
+
+    &.feature-header {
+      text-align: left;
+      font-weight: bold;
+      background-color: #e9ecef;
+      min-width: 120px; // Özellik sütunu genişliği
+    }
+  }
+
+  // Ürün Başlığındaki Kaldır Butonu
+  .product-header .remove-product-btn {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: rgba(0,0,0,0.1);
+      border: none;
+      border-radius: 50%;
+      color: $text-color-muted;
+      cursor: pointer;
+      width: 20px;
+      height: 20px;
+      line-height: 18px; // İkonu ortala
+      padding: 0;
+      font-size: 1em;
+      font-weight: bold;
+      transition: background-color 0.2s, color 0.2s;
+      &:hover {
+          background-color: $danger-color;
+          color: white;
+      }
+  }
+
+  // Özellik Satırları
+  tbody .feature-row {
+    .feature-name {
+      font-weight: bold;
+      text-align: left;
+      background-color: $header-bg; // Özellik isimleri için hafif arkaplan
+    }
+
+    .product-cell {
+      // Özel hücre stilleri (örn: fiyat, puan)
+      &.price-cell {
+        font-weight: bold;
+        color: $primary-color;
+        font-size: 1.1em;
+      }
+      &.rating-cell span {
+        color: $rating-color;
+        font-weight: bold;
+      }
+
+      img { // Ürün resmi
+        max-width: 100px;
+        max-height: 100px;
+        object-fit: contain;
+      }
+       a { // Ürün adı linki
+           color: $link-color;
+           font-weight: 500;
+           &:hover { text-decoration: underline;}
+       }
+    }
+  }
+
+  // Sepete Ekle Butonu (Küçük)
+  .add-to-cart-small-btn {
+      font-size: 0.85em;
+      padding: 0.4rem 0.8rem;
+      background-color: #28a745; // Yeşil
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      &:hover { background-color: darken(#28a745, 10%);}
+  }
+
+  // Son satırın border'ını kaldır (opsiyonel)
+  // tbody tr:last-child td { border-bottom: none; }
+}

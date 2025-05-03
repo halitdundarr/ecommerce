@@ -1,0 +1,156 @@
+// Gerekli değişkenler veya importlar
+@use 'sass:math';
+@use 'sass:color';
+// ... (product-list ile aynı değişkenler tanımlanabilir veya import edilebilir) ...
+$primary-color: #ff6000;
+$border-color-light: #eee;
+$text-color-dark: #333;
+$text-color-light: #666;
+$text-color-muted: #6c757d;
+$background-color-white: #fff;
+$success-color: #28a745;
+$error-color: #dc3545;
+$rating-color: #f8b400;
+$link-color: #007bff;
+$wishlist-color: #e74c3c;
+$compare-active-border: #28a745;
+
+// Sadece bu sayfaya özel ek stiller (gerekirse)
+.search-results-container {
+  padding: 1.5rem;
+  max-width: 1400px; // Product list ile aynı
+  margin: 0 auto;
+
+   h2 {
+     margin-bottom: 1.5rem;
+     font-weight: 500;
+     border-bottom: 1px solid $border-color-light;
+     padding-bottom: 0.8rem;
+   }
+
+   .loading-indicator, .error-message, .no-results {
+       text-align: center;
+       padding: 2rem;
+       color: $text-color-muted;
+    }
+   .error-message { color: $error-color; }
+   .no-results { font-style: italic; }
+
+   // Product Grid ve Card stilleri product-list.component.scss'ten miras alınabilir
+   // veya buraya kopyalanabilir.
+   .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.5rem;
+   }
+
+   .product-card {
+      border: 1px solid $border-color-light;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      background-color: $background-color-white;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative; // <-- İkonlar için eklendi
+
+       &:hover {
+           transform: translateY(-5px);
+           box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+       }
+
+      // --- Wishlist Buton Stilleri (Güncellenmiş) ---
+      .wishlist-icon-container {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          z-index: 1;
+
+          .wishlist-btn {
+              background: none; // Arka plan yok
+              border: none;
+              border-radius: 50%;
+              padding: 0.4rem;
+              cursor: pointer;
+              line-height: 1;
+              transition: transform 0.2s, color 0.2s, background-color 0.2s;
+
+              i {
+                  font-size: 1.3em;
+                  color: #aaa; // Varsayılan ikon rengi
+                  display: block;
+                  transition: color 0.2s;
+              }
+
+              &.in-wishlist i {
+                  color: $wishlist-color; // Aktif ikon rengi
+              }
+
+              &:hover {
+                  transform: scale(1.1);
+                  background: rgba(0, 0, 0, 0.05); // Hafif hover arka planı
+              }
+          }
+      }
+      // --- Bitiş: Wishlist Buton Stilleri ---
+
+      // --- Compare Buton Stilleri (Güncellenmiş) ---
+      .compare-icon-container {
+          position: absolute;
+          top: 0.5rem;
+          left: 0.5rem;
+          z-index: 1;
+
+          .compare-btn {
+              background: none; // Arka plan yok
+              border: 1px solid transparent; // Şeffaf border
+              border-radius: 50%;
+              padding: 0.3rem;
+              cursor: pointer;
+              line-height: 1;
+              transition: transform 0.2s, color 0.2s, background-color 0.2s, border-color 0.2s;
+
+              i {
+                  font-size: 1.1em;
+                  color: #888; // Varsayılan ikon rengi
+                  display: block;
+                  transition: color 0.2s;
+              }
+
+              &.in-comparison {
+                 border-color: $compare-active-border; // Aktif border rengi
+                 i { color: $compare-active-border; } // Aktif ikon rengi
+              }
+
+              &:hover:not(:disabled) {
+                  transform: scale(1.1);
+                  background: rgba(0, 0, 0, 0.05); // Hafif hover arka planı
+                  border-color: #bbb; // Hover border rengi
+                   &.in-comparison {
+                      border-color: darken($compare-active-border, 10%);
+                   }
+              }
+
+              &:disabled {
+                 opacity: 0.5;
+                 cursor: not-allowed;
+                 transform: none;
+                 background: none;
+                 border-color: transparent;
+              }
+          }
+      }
+      // --- Bitiş: Compare Buton Stilleri ---
+
+      // Kartın diğer elemanları
+      img { max-width: 100%; height: 150px; object-fit: contain; margin-bottom: 0.5rem;}
+      h3 { font-size: 1.05em; margin-bottom: 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; a { color: #333; text-decoration: none; &:hover{color:$link-color; text-decoration: underline;} } }
+      .price { font-weight: bold; color: $primary-color; font-size: 1.15em; margin-bottom: 0.5rem; }
+      .rating { font-size: 0.9em; color: #666; margin-bottom: 0.8rem; min-height: 1.2em; span { color: $rating-color; font-weight: bold; } }
+      // Sepete ekle butonu
+      button { background-color: $success-color; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; margin-top: auto; &:hover{ background-color: darken($success-color, 10%);} }
+   } // .product-card sonu
+} // .search-results-container sonu

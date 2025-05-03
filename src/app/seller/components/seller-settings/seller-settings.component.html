@@ -1,0 +1,75 @@
+<div class="settings-container">
+  <h3>Mağaza Ayarları</h3>
+
+  <ng-container *ngIf="currentUser$ | async as user">
+
+    <section class="settings-section">
+      <h4>Mağaza Bilgileri</h4>
+      <form [formGroup]="storeInfoForm" (ngSubmit)="saveStoreInfo()">
+        <div class="form-group">
+          <label for="storeName">Mağaza Adı*</label>
+          <input type="text" id="storeName" formControlName="storeName">
+          <div *ngIf="storeName?.invalid && (storeName?.dirty || storeName?.touched)" class="invalid-feedback">
+               Mağaza adı zorunludur.
+           </div>
+        </div>
+        <div class="form-group">
+          <label for="storeDescription">Mağaza Açıklaması</label>
+          <textarea id="storeDescription" formControlName="storeDescription" rows="3"></textarea>
+        </div>
+
+        <div *ngIf="storeInfoError" class="error-message">{{ storeInfoError }}</div>
+        <div *ngIf="storeInfoSuccess" class="success-message">{{ storeInfoSuccess }}</div>
+        <app-loading-spinner *ngIf="isSubmittingStoreInfo"></app-loading-spinner>
+        <div class="form-actions">
+          <button type="submit" [disabled]="storeInfoForm.invalid || isSubmittingStoreInfo">
+            {{ isSubmittingStoreInfo ? 'Kaydediliyor...' : 'Mağaza Bilgilerini Kaydet' }}
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="settings-section">
+       <h4>Ödeme Bilgileri (IBAN vb.)</h4>
+       <p class="info-text">Kazançlarınızın aktarılacağı banka hesabınızı tanımlayın.</p>
+       <form [formGroup]="paymentInfoForm" (ngSubmit)="savePaymentInfo()">
+           <div class="form-group">
+             <label for="bankName">Banka Adı*</label>
+             <input type="text" id="bankName" formControlName="bankName">
+             </div>
+           <div class="form-group">
+              <label for="accountHolder">Hesap Sahibi Ad Soyad*</label>
+              <input type="text" id="accountHolder" formControlName="accountHolder">
+              </div>
+           <div class="form-group">
+             <label for="iban">IBAN*</label>
+             <input type="text" id="iban" formControlName="iban" placeholder="TRxx xxxx xxxx xxxx xxxx xxxx xx">
+              <div *ngIf="iban?.invalid && (iban?.dirty || iban?.touched)" class="invalid-feedback">
+                  Geçerli bir IBAN giriniz.
+              </div>
+           </div>
+
+           <div *ngIf="paymentInfoError" class="error-message">{{ paymentInfoError }}</div>
+           <div *ngIf="paymentInfoSuccess" class="success-message">{{ paymentInfoSuccess }}</div>
+           <app-loading-spinner *ngIf="isSubmittingPaymentInfo"></app-loading-spinner>
+           <div class="form-actions">
+             <button type="submit" [disabled]="paymentInfoForm.invalid || isSubmittingPaymentInfo">
+                {{ isSubmittingPaymentInfo ? 'Kaydediliyor...' : 'Ödeme Bilgilerini Kaydet' }}
+             </button>
+           </div>
+       </form>
+    </section>
+
+     <section class="settings-section">
+        <h4>Hesap Güvenliği</h4>
+        <p>E-posta: {{ user.email }} (Değiştirilemez)</p>
+        <button class="action-btn">Şifre Değiştir (TODO)</button>
+     </section>
+
+  </ng-container>
+
+   <div *ngIf="!(currentUser$ | async)">
+       Ayarları görüntülemek için lütfen giriş yapın.
+   </div>
+
+</div>

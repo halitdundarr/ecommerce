@@ -1,0 +1,80 @@
+<div class="order-detail-container">
+  <button routerLink="/buyer/orders" class="back-button">&larr; Siparişlerim</button>
+
+  <h2>Sipariş Detayları</h2>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(order$ | async) as order; else notFound">
+    <div *ngIf="order && !isLoading && !error">
+
+      <section class="order-summary-header card">
+        <div><span>Sipariş No:</span> <strong>{{ order.id }}</strong></div>
+        <div><span>Sipariş Tarihi:</span> {{ order.orderDate | date:'dd.MM.yyyy HH:mm' }}</div>
+        <div>
+            <span>Sipariş Durumu:</span>
+            <strong [ngClass]="getStatusClass(order.status)">{{ order.status }}</strong>
+        </div>
+        <div><span>Toplam Tutar:</span> <strong>{{ order.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</strong></div>
+      </section>
+
+      <section class="shipment-details card" *ngIf="order.shipments && order.shipments.length > 0 && (order.status === 'SHIPPED' || order.status === 'DELIVERED')">
+        <h4>Kargo Bilgileri</h4>
+        <div class="shipment-info">
+           <p><strong>Kargo Firması:</strong> {{ order.shipments[0]?.carrier || 'Belirtilmemiş' }}</p>
+           <p><strong>Takip Numarası:</strong> {{ order.shipments[0]?.trackingNumber || 'Belirtilmemiş' }}</p>
+           <p *ngIf="order.shipments[0]?.shippedDate"><strong>Kargoya Verilme Tarihi:</strong> {{ order.shipments[0]?.shippedDate | date:'dd.MM.yyyy HH:mm' }}</p>
+           </div>
+     </section>
+      <section class="address-details card">
+        <div class="address-column">
+          <h4>Teslimat Adresi</h4>
+          <address *ngIf="order.shippingAddress as addr">
+            {{ addr.city }}, {{ addr.postalCode }}<br> </address>
+
+        <address *ngIf="order.billingAddress as addr">
+           {{ addr.city }}, {{ addr.postalCode }}<br> </address>
+            <p *ngIf="!order.billingAddress">Fatura adresi bulunamadı.</p>
+        </div>
+      </section>
+
+      <section class="order-items-details card">
+          <h4>Siparişteki Ürünler</h4>
+          <div *ngIf="order.items && order.items.length > 0; else noItems">
+            <div *ngFor="let item of order.items" class="order-item-row">
+              <img [src]="item.product.imageUrl || 'https://via.placeholder.com/60?text=?'"
+                   [alt]="item.product.name"> <div class="item-info">
+                  <a [routerLink]="['/products/detail', item.productId]">{{ item.product.name }}</a>
+                  <span>Birim Fiyat: {{ item.unitPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+                  <span *ngIf="item.returnStatus" class="return-status-info">
+                      İade Durumu: {{ item.returnStatus }}
+                  </span>
+              </div>
+
+                  <div class="item-quantity">
+                      {{ item.quantity }} Adet
+                  </div>
+                  <div class="item-total">
+                      {{ item.totalPrice | currency:'TRY':'symbol':'1.2-2' }}
+                  </div>
+                  <div class="item-actions">
+                      <button
+                          *ngIf="isReturnEligible(order.status, item)"
+                          class="return-button"
+                          (click)="requestReturn(item, order.id)">
+                          İade Et
+                      </button>
+                  </div>
+                  </div>
+          </div>
+          <ng-template #noItems><p>Bu siparişte ürün bulunamadı.</p></ng-template>
+      </section>
+
+    </div> </ng-container>
+
+  <ng-template #notFound>
+      <p *ngIf="!isLoading && !error">Sipariş bulunamadı.</p>
+      <a routerLink="/buyer/orders">Sipariş Listesine Dön</a> </ng-template>
+
+</div>

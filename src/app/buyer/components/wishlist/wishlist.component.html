@@ -1,0 +1,46 @@
+<div class="wishlist-container">
+  <h2>İstek Listem</h2>
+
+  <ng-container *ngIf="wishlist$ | async as wishlist; else loadingOrError">
+
+    <div *ngIf="!wishlist || wishlist.items.length === 0; else wishlistItems" class="empty-wishlist">
+      <p>İstek listeniz boş.</p>
+      <a routerLink="/products">Hemen Alışverişe Başla</a>
+    </div>
+
+    <ng-template #wishlistItems>
+      <div class="wishlist-grid">
+        <ng-container *ngFor="let item of wishlist.items">
+          <div *ngIf="item.product" class="wishlist-item-card">
+            <div class="item-image">
+              <a [routerLink]="['/products/detail', item.productId]">
+                <img [src]="item.product.imageUrl || 'https://via.placeholder.com/100?text=?'"
+                     [alt]="item.product.name"> </a>
+            </div>
+            <div class="item-details">
+              <h4 class="item-name">
+                 <a [routerLink]="['/products/detail', item.productId]">{{ item.product.name }}</a>
+              </h4>
+              <p class="item-price">
+                 {{ item.product.price | currency:'TRY':'symbol':'1.2-2' }}
+              </p>
+              <p class="added-date" *ngIf="item.addedAt">
+                <small>Eklendi: {{ item.addedAt | date:'dd.MM.yyyy' }}</small>
+              </p>
+            </div>
+            <div class="item-actions">
+              <button class="remove-btn" (click)="removeFromWishlist(item.productId)" title="Listeden Kaldır">
+                Kaldır <i class="icon-remove">❌</i> </button>
+              </div>
+          </div>
+        </ng-container>
+      </div>
+    </ng-template>
+
+  </ng-container>
+
+  <ng-template #loadingOrError>
+     <p class="loading-placeholder">İstek listesi yükleniyor...</p>
+  </ng-template>
+
+</div>

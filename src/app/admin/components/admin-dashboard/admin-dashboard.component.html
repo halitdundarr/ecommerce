@@ -1,0 +1,54 @@
+<div class="dashboard-container">
+  <h3>Kontrol Paneli</h3>
+
+  <section class="summary-stats">
+    <div class="stat-card users">
+      <div class="icon">👥</div>
+      <div class="info">
+        <span class="value">{{ summaryStats.totalUsers }}</span>
+        <span class="label">Toplam Kullanıcı</span>
+      </div>
+    </div>
+    <div class="stat-card products">
+      <div class="icon">📦</div>
+      <div class="info">
+        <span class="value">{{ summaryStats.totalProducts }}</span>
+        <span class="label">Toplam Ürün</span>
+      </div>
+    </div>
+    <div class="stat-card orders">
+      <div class="icon">🛒</div>
+      <div class="info">
+        <span class="value">{{ summaryStats.pendingOrders }}</span>
+        <span class="label">Bekleyen Sipariş</span>
+      </div>
+    </div>
+    <div class="stat-card revenue">
+      <div class="icon">💰</div>
+      <div class="info">
+        <span class="value">{{ summaryStats.totalRevenue | currency:'TRY':'symbol':'1.2-2' }}</span>
+        <span class="label">Toplam Gelir</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="quick-actions">
+    <h4>Hızlı İşlemler</h4>
+    <div class="action-links">
+      <a routerLink="../users" class="action-link">Kullanıcıları Yönet</a>
+      <a routerLink="../products" class="action-link">Ürünleri Yönet</a>
+      <a routerLink="../orders" class="action-link">Siparişleri Yönet</a>
+      <a routerLink="../returns" class="action-link">İadeleri Yönet</a>
+      <a routerLink="../products/new" class="action-link add-new">Yeni Ürün Ekle</a>
+    </div>
+  </section>
+
+  <section class="charts-placeholder">
+    <h4>Grafikler (Placeholder)</h4>
+    <div class="chart-area">
+      <p>Buraya satış trendleri, kullanıcı kayıtları gibi grafikler eklenebilir.</p>
+      <img src="https://via.placeholder.com/600x300?text=Grafik+Alanı" alt="Grafik Placeholder">
+    </div>
+  </section>
+
+</div>

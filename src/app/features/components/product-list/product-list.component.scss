@@ -1,0 +1,420 @@
+// Modern Sass modüllerini import et
+@use 'sass:math';
+@use 'sass:color';
+
+// Değişkenler
+$primary-color: #ff6000;
+$border-color-light: #eee;
+$border-color-medium: #ddd;
+$input-border-color: #ccc; // Input border
+$text-color-dark: #333;
+$text-color-medium: #484848;
+$text-color-light: #666;
+$text-color-muted: #6c757d; // Sidebar temizle butonu
+$background-color-light-gray: #f5f5f5;
+$background-color-white: #fff;
+$success-color: #28a745;
+$error-color: #dc3545;
+$rating-color: #f8b400;
+$link-color: #007bff;
+$wishlist-color: #e74c3c; // İstek listesi aktif rengi
+// $compare-active-bg: #d4edda; // Karşılaştır aktif arka planı - Kullanılmıyor
+$compare-active-border: #28a745; // Karşılaştır aktif border/ikon rengi
+$button-bg-secondary: #6c757d; // Filtrele butonu
+
+$spacing-unit: 1rem;
+
+// --- Ana Layout ---
+.list-layout {
+  display: flex;
+  gap: 1.5rem;
+  padding: $spacing-unit;
+  align-items: flex-start;
+
+  @media (max-width: 992px) { // Sidebar'ın alta geçeceği breakpoint (ayarlanabilir)
+    flex-direction: column;
+  }
+}
+
+// --- Filtre Kenar Çubuğu (Sol) ---
+.filters-sidebar {
+  flex: 0 0 250px;
+  background-color: $background-color-white;
+  padding: $spacing-unit;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  align-self: flex-start;
+  position: sticky; // Sticky sidebar
+  top: 80px; // Header yüksekliği + boşluk
+
+  h4 {
+    margin-top: 0; // İlk başlığın üst boşluğunu kaldır
+    margin-bottom: $spacing-unit;
+    font-size: 1.1em;
+    border-bottom: 1px solid $border-color-light;
+    padding-bottom: math.div($spacing-unit, 2);
+    color: $text-color-dark;
+  }
+
+  // Kategori Listesi
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      margin-bottom: math.div($spacing-unit, 3);
+
+      a {
+        display: block;
+        padding: 0.6rem 0.8rem;
+        border-radius: 4px;
+        color: $text-color-medium;
+        text-decoration: none;
+        transition: background-color 0.2s, color 0.2s;
+        font-size: 0.9em;
+        cursor: pointer;
+
+        &:hover {
+          background-color: $background-color-light-gray;
+          color: $text-color-dark;
+        }
+      }
+
+      &.active a {
+        background-color: $primary-color;
+        color: white;
+        font-weight: bold;
+        &:hover {
+          background-color: color.adjust($primary-color, $lightness: -5%);
+          color: white;
+        }
+      }
+    }
+  }
+
+  .loading-placeholder {
+    padding: $spacing-unit;
+    text-align: center;
+    color: $text-color-light;
+    font-style: italic;
+  }
+
+  // Genel Filtre Bölümü Stili
+  .filter-section {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid $border-color-light;
+
+      h4 { // Bölüm başlıkları (Fiyat, Marka vb.)
+          font-size: 1em;
+          margin-bottom: 0.8rem;
+          padding-bottom: 0;
+          border-bottom: none;
+      }
+  }
+
+  // Fiyat Filtresi Stilleri
+  .price-filter {
+      .price-inputs {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.8rem;
+
+          input[type="number"] {
+              width: 100%;
+              padding: 0.5rem;
+              border: 1px solid $input-border-color;
+              border-radius: 3px;
+              font-size: 0.9em;
+              -moz-appearance: textfield;
+               &::-webkit-outer-spin-button,
+               &::-webkit-inner-spin-button {
+                 -webkit-appearance: none;
+                 margin: 0;
+               }
+               &:focus {
+                  outline: none;
+                  border-color: $primary-color;
+               }
+          }
+          span { color: $text-color-muted; }
+      }
+
+      .filter-apply-btn {
+          width: 100%;
+          padding: 0.6rem;
+          background-color: $button-bg-secondary;
+          color: white;
+          border: none;
+          border-radius: 3px;
+          cursor: pointer;
+          font-size: 0.9em;
+          transition: background-color 0.2s;
+          &:hover {
+             background-color: darken($button-bg-secondary, 10%);
+          }
+      }
+  }
+
+  // Filtreleri Temizle Butonu Stili
+  .clear-filters {
+      .clear-all-btn {
+          width: 100%;
+          background: none;
+          border: 1px solid $text-color-muted;
+          color: $text-color-muted;
+          padding: 0.5rem;
+          border-radius: 3px;
+          font-size: 0.85em;
+          cursor: pointer;
+          transition: background-color 0.2s, color 0.2s;
+          &:hover {
+              background-color: $text-color-muted;
+              color: white;
+          }
+      }
+  }
+
+
+  @media (max-width: 992px) { // Sidebar'ın alta geçtiği breakpoint
+    flex: 1 1 auto;
+    width: 100%;
+    margin-bottom: $spacing-unit;
+    position: static; // Sticky özelliğini kaldır
+  }
+} // .filters-sidebar sonu
+
+// --- Ürün Listesi Alanı (Sağ) ---
+.product-list-container {
+  flex: 1;
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: $spacing-unit;
+    font-size: 1.4em;
+    color: $text-color-dark;
+
+    span {
+      font-size: 0.7em;
+      color: $text-color-light;
+      font-weight: normal;
+      margin-left: math.div($spacing-unit, 2);
+    }
+     .active-filters {
+         font-size: 0.7em;
+         color: $text-color-light;
+         font-weight: normal;
+         margin-left: 1em;
+         font-style: italic;
+     }
+  }
+
+  .loading-placeholder { // Ürünler yükleniyor
+    text-align: center;
+    padding: 2rem;
+    color: $text-color-light;
+    font-size: 1.1em;
+  }
+   .error-message { // Genel hata mesajı
+       text-align: center;
+       color: $error-color;
+       padding: 1rem;
+       font-style: italic;
+   }
+
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .product-card {
+    border: 1px solid $border-color-light;
+    border-radius: 8px;
+    padding: $spacing-unit;
+    text-align: center;
+    background-color: $background-color-white;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative; // İkonlar için
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    img {
+      max-width: 100%;
+      height: 150px;
+      object-fit: contain;
+      margin-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.05em;
+      margin-bottom: 0.5rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+
+      a {
+         color: $text-color-dark;
+         text-decoration: none;
+         &:hover {
+             color: $primary-color;
+             text-decoration: underline;
+         }
+      }
+    }
+
+    .price {
+      font-weight: bold;
+      color: $primary-color;
+      font-size: 1.15em;
+      margin-bottom: 0.5rem;
+    }
+
+    .rating {
+      font-size: 0.9em;
+      color: $text-color-light;
+      margin-bottom: 0.8rem;
+      min-height: 1.2em; // Puan olmayanlar için yer tut
+      span {
+          color: $rating-color;
+          font-weight: bold;
+      }
+    }
+
+    // Sepete ekle butonu
+    button[type="button"] {
+      background-color: $success-color;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      margin-top: auto;
+
+      &:hover {
+        background-color: color.adjust($success-color, $lightness: -10%);
+      }
+       &:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+       }
+    }
+
+    // Wishlist İkon Stili (Güncellenmiş)
+    .wishlist-icon-container {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 1;
+
+        .wishlist-btn {
+            background: none; // Arka plan yok
+            border: none;
+            border-radius: 50%;
+            padding: 0.4rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: transform 0.2s, color 0.2s, background-color 0.2s;
+
+            i {
+                font-size: 1.3em;
+                color: #aaa; // Varsayılan ikon rengi
+                display: block;
+                transition: color 0.2s;
+            }
+
+            &.in-wishlist i {
+                color: $wishlist-color; // Aktif ikon rengi
+            }
+
+            &:hover {
+                transform: scale(1.1);
+                background: rgba(0, 0, 0, 0.05); // Hafif hover arka planı
+            }
+        }
+    } // .wishlist-icon-container sonu
+
+    // Compare İkon Stili (Güncellenmiş)
+    .compare-icon-container {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        z-index: 1;
+
+        .compare-btn {
+            background: none; // Arka plan yok
+            border: 1px solid transparent; // Şeffaf border
+            border-radius: 50%;
+            padding: 0.3rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: transform 0.2s, color 0.2s, background-color 0.2s, border-color 0.2s;
+
+            i {
+                font-size: 1.1em;
+                color: #888; // Varsayılan ikon rengi
+                display: block;
+                transition: color 0.2s;
+            }
+
+            &.in-comparison {
+               border-color: $compare-active-border; // Aktif border rengi
+               i { color: $compare-active-border; } // Aktif ikon rengi
+            }
+
+            &:hover:not(:disabled) {
+                transform: scale(1.1);
+                background: rgba(0, 0, 0, 0.05); // Hafif hover arka planı
+                border-color: #bbb; // Hover border rengi
+                 &.in-comparison {
+                    border-color: darken($compare-active-border, 10%);
+                 }
+            }
+
+            &:disabled {
+               opacity: 0.5;
+               cursor: not-allowed;
+               transform: none;
+               background: none;
+               border-color: transparent;
+            }
+        }
+    } // .compare-icon-container sonu
+
+  } // .product-card sonu
+
+  .no-products {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: $text-color-light;
+    grid-column: 1 / -1;
+    font-style: italic;
+
+     .clear-filters-inline-btn { // Ürün yoksa filtre temizle butonu
+         margin-top: 1rem;
+         background: none;
+         border: 1px solid $text-color-muted;
+         color: $text-color-muted;
+         padding: 0.5rem 1rem;
+         border-radius: 3px;
+         font-size: 0.9em;
+         cursor: pointer;
+         transition: background-color 0.2s, color 0.2s;
+         &:hover {
+             background-color: $text-color-muted;
+             color: white;
+         }
+     }
+  }
+
+} // .product-list-container sonu

@@ -1,0 +1,23 @@
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <h3>Admin Paneli</h3>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a routerLink="dashboard" routerLinkActive="active-link"><i class="icon-dashboard">📊</i> Kontrol Paneli</a></li>
+        <li><a routerLink="users" routerLinkActive="active-link"><i class="icon-users">👥</i> Kullanıcı Yönetimi</a></li>
+        <li><a routerLink="products" routerLinkActive="active-link"><i class="icon-products">📦</i> Ürün Yönetimi</a></li>
+        <li><a routerLink="orders" routerLinkActive="active-link"><i class="icon-orders">🛒</i> Sipariş Yönetimi</a></li>
+        <li><a routerLink="returns" routerLinkActive="active-link"><i class="icon-returns">↩️</i> İade Yönetimi</a></li>
+        <li><a routerLink="payment-issues" routerLinkActive="active-link"><i class="icon-payment">💳</i> Ödeme Sorunları</a></li>
+        <li><a routerLink="complaints" routerLinkActive="active-link"><i class="icon-support">🗣️</i> Destek/Şikayet</a></li>
+        <li><a (click)="logout()" class="logout-link"><i class="icon-logout">🚪</i> Çıkış Yap</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="admin-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

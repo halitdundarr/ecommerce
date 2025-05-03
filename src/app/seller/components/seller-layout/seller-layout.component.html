@@ -1,0 +1,19 @@
+<div class="seller-layout">
+  <aside class="seller-sidebar">
+    <div class="sidebar-header">
+      <h3>Satıcı Paneli</h3>
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a routerLink="dashboard" routerLinkActive="active-link"><i class="icon-dashboard">📊</i> Kontrol Paneli</a></li>
+        <li><a routerLink="products" routerLinkActive="active-link"><i class="icon-products">📦</i> Ürünlerim</a></li>
+        <li><a routerLink="orders" routerLinkActive="active-link"><i class="icon-orders">🛒</i> Gelen Siparişler</a></li>
+        <li><a routerLink="settings" routerLinkActive="active-link"><i class="icon-settings">⚙️</i> Ayarlar</a></li>
+        <li><a (click)="logout()" class="logout-link"><i class="icon-logout">🚪</i> Çıkış Yap</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="seller-content">
+    <router-outlet></router-outlet> </main>
+</div>

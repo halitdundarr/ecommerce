@@ -1,0 +1,219 @@
+@use 'sass:math';
+@use 'sass:color';
+
+// Değişkenler (OrderHistory'den veya global'den alınabilir)
+$border-color: #e0e0e0;
+$primary-color: #ff6000;
+$link-color: #007bff;
+$text-color-dark: #343a40;
+$text-color-muted: #6c757d;
+$status-delivered: #28a745;
+$status-shipped: #17a2b8;
+$status-processing: #ffc107;
+$status-cancelled: #dc3545;
+$danger-color: #dc3545;
+$status-pending: #6c757d; // OrderStatus PENDING ise
+$spacing-unit: 1rem;
+$return-button-bg: #ffc107; // İade butonu rengi
+$return-status-color: #6c757d; // İade durumu metin rengi
+
+.order-detail-container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 1rem;
+
+  .back-button {
+      background: none;
+      border: none;
+      color: $link-color;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      display: inline-block;
+      font-size: 0.9em;
+      &:hover { text-decoration: underline; }
+  }
+
+  h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+  }
+
+   .loading-indicator, .error-message {
+      text-align: center;
+      padding: 2rem;
+      color: $text-color-muted;
+   }
+   .error-message {
+       color: $danger-color;
+       a { // Hata mesajı içindeki link
+           color: $link-color;
+           text-decoration: underline;
+           margin-left: 5px;
+       }
+   }
+
+   // Genel Kart Stili
+   .card {
+       background-color: #fff;
+       border: 1px solid $border-color;
+       border-radius: 8px;
+       margin-bottom: 1.5rem;
+       padding: 1.5rem;
+       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+   }
+
+   // Sipariş Özeti Başlığı
+   .order-summary-header {
+       display: flex;
+       justify-content: space-between;
+       flex-wrap: wrap;
+       gap: 1rem;
+       font-size: 0.95em;
+       align-items: center; // Dikeyde ortala
+
+       div {
+           span { color: $text-color-muted; margin-right: 5px;}
+           strong { color: $text-color-dark; }
+
+           // Durum Badge stilleri
+           strong[class*='status-'] {
+               padding: 0.2rem 0.6rem;
+               border-radius: 15px;
+               font-size: 0.9em;
+               color: white;
+               vertical-align: middle; // Hizalamaya yardımcı
+
+               &.status-delivered { background-color: $status-delivered; }
+               &.status-shipped { background-color: $status-shipped; }
+               &.status-processing { background-color: $status-processing; color: #333; }
+               &.status-cancelled { background-color: $status-cancelled; }
+               &.status-pending { background-color: $status-pending; }
+           }
+       }
+   }
+
+   // Kargo Bilgileri Bölümü
+   .shipment-details {
+       h4 {
+          margin-top: 0;
+          margin-bottom: 1rem;
+          font-size: 1.1em;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px solid $border-color;
+        }
+        .shipment-info {
+            font-size: 0.95em;
+            line-height: 1.7;
+            p {
+                margin-bottom: 0.5rem;
+                strong { color: $text-color-dark; margin-right: 5px; }
+            }
+            .tracking-link { // Opsiyonel takip linki stili
+                display: inline-block;
+                margin-top: 0.5rem;
+                font-weight: 500;
+                color: $link-color;
+                &:hover { text-decoration: underline; }
+            }
+        }
+   }
+
+   // Adres Detayları
+    .address-details {
+        display: flex;
+        gap: 2rem; // Adres sütunları arası boşluk
+        flex-wrap: wrap;
+         .address-column {
+             flex: 1; // Eşit yer kapla
+             min-width: 250px; // Minimum genişlik
+             h4 { margin-bottom: 0.8rem; font-size: 1.1em; }
+             address { font-style: normal; line-height: 1.6; font-size: 0.9em;}
+             strong { display: block; margin-bottom: 0.3rem;}
+             p { font-size: 0.9em; color: $text-color-muted; margin-top: 0.5rem;} // Adres yoksa mesajı
+         }
+    }
+
+   // Siparişteki Ürünler
+    .order-items-details {
+        h4 { margin-bottom: 1rem; font-size: 1.1em; }
+        .order-item-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid $border-color;
+            &:last-child { border-bottom: none; padding-bottom: 0;}
+            &:first-child { padding-top: 0;}
+
+            img {
+                width: 60px;
+                height: 60px;
+                object-fit: contain;
+                border: 1px solid $border-color;
+                border-radius: 4px;
+                flex-shrink: 0; // Küçülme
+            }
+            .item-info {
+                flex-grow: 1; // Kalan alanı doldur
+                a { font-weight: 500; color: $text-color-dark; display: block; margin-bottom: 0.2rem; &:hover{color:$link-color; text-decoration: underline;}}
+                span { font-size: 0.85em; color: $text-color-muted; display: block;} // Birim fiyatı alta alalım
+
+                 // İade Durumu Stili
+                .return-status-info {
+                    display: block;
+                    margin-top: 0.3rem;
+                    font-size: 0.8em;
+                    color: $return-status-color;
+                    font-style: italic;
+                }
+            }
+            .item-quantity {
+                min-width: 60px; // Hizalama
+                text-align: center;
+                font-size: 0.9em;
+                color: $text-color-muted;
+            }
+            .item-total {
+                min-width: 100px; // Hizalama
+                text-align: right;
+                font-weight: 500;
+            }
+            // İade Butonu Alanı Stili
+            .item-actions {
+                min-width: 80px; // Buton için yer ayır
+                text-align: right;
+
+                .return-button {
+                    background-color: $return-button-bg;
+                    color: #333;
+                    border: none;
+                    border-radius: 4px;
+                    padding: 0.4rem 0.8rem;
+                    font-size: 0.85em;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+
+                    &:hover {
+                        background-color: darken($return-button-bg, 10%);
+                    }
+                }
+            } // .item-actions sonu
+
+            // Küçük Ekran Düzenlemesi
+             @media (max-width: 576px) {
+                  flex-wrap: wrap;
+                  img { width: 45px; height: 45px;}
+                  .item-info { flex-basis: 100%; order: -1; margin-bottom: 0.5rem;} // Ürün adı üste
+                  .item-quantity { text-align: left; min-width: auto; margin-right: 1rem;}
+                  .item-total { text-align: right; flex-grow: 1;}
+                  .item-actions { // İade butonunu alta veya yana al
+                      flex-basis: 100%;
+                      text-align: right;
+                      margin-top: 0.5rem;
+                  }
+             } // @media sonu
+        } // .order-item-row sonu
+         p { font-size: 0.9em; color: $text-color-muted; } // Ürün yoksa mesajı
+    } // .order-items-details sonu
+} // .order-detail-container sonu

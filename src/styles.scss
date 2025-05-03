@@ -1,0 +1,57 @@
+/* You can add global styles to this file, and also import other style files */
+/* Global Stiller */
+@use 'sass:math'; // Yeni bölme işlemi için
+@use 'sass:color'; // Yeni renk fonksiyonları için
+@import 'ngx-toastr/toastr';
+
+// Fontlar (Örnek: Google Fonts)
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+// Temel Resetlemeler
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Roboto', sans-serif; // Uygulama geneli font
+  background-color: #f4f4f4; // Sayfa arkaplan rengi (Hepsiburada'ya benzer)
+  color: #333; // Temel metin rengi
+  line-height: 1.6;
+}
+
+a {
+  text-decoration: none;
+  color: inherit; // Linklerin varsayılan rengini miras almasını sağla
+}
+
+ul {
+  list-style: none;
+}
+
+// Ana içerik alanı için temel stil (Opsiyonel)
+// app.component.scss içinde de olabilir
+main.main-content {
+  min-height: calc(100vh - 150px); // Footer'ı aşağıda tutmak için (header/footer yüksekliğine göre ayarlayın)
+  padding-top: 1rem; // Header ile içerik arasına boşluk
+  padding-bottom: 1rem;
+  // max-width: 1400px; // İçeriği sınırlandırmak için (isteğe bağlı)
+  // margin: 0 auto; // Ortalamak için
+}
+
+// Genel tema renkleri için CSS değişkenleri (Custom Properties) tanımlanabilir
+:root {
+  --primary-color: #ff6000; // Hepsiburada turuncusu (yaklaşık)
+  --secondary-color: #004c8f; // Koyu mavi (Hepsiburada'da kullanılır)
+  // ... diğer renkler
+}
+
+// İkon Kütüphanesi: Eğer FontAwesome gibi bir kütüphane kullanacaksanız,
+// kurulum talimatlarına göre buraya import edebilir veya index.html'e link ekleyebilirsiniz.
+// @import '~@fortawesome/fontawesome-free/css/all.min.css';
+
+// SCSS Uyarılarını gidermek için eski kodları güncelleyebilirsiniz:
+// Örnek: $spacing-unit: 1rem;
+// margin: math.div($spacing-unit, 2); // ($spacing-unit / 2) yerine
+// background-color: color.adjust($primary-color, $lightness: -10%); // darken($primary-color, 10%) yerine

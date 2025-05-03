@@ -1,0 +1,119 @@
+<div class="profile-container">
+  <h2>Profilim</h2>
+
+  <div class="profile-layout">
+
+    <aside class="profile-sidebar">
+      <nav>
+        <ul>
+          <li><a routerLink="./" routerLinkActive="active-section" [routerLinkActiveOptions]="{exact: true}">Profil Bilgileri</a></li>
+          <li><a routerLink="addresses" routerLinkActive="active-section">Adreslerim</a></li>
+          <li><a routerLink="/buyer/orders">Siparişlerim</a></li>
+          <li><a routerLink="/buyer/wishlist">İstek Listem</a></li>
+          </ul>
+      </nav>
+    </aside>
+
+    <main class="profile-content">
+
+      <section class="profile-section" id="profile-info">
+        <h4>Profil Bilgileri</h4>
+        <ng-container *ngIf="currentUser$ | async as user">
+          <div class="user-info">
+            <p><strong>Ad Soyad:</strong> {{ user.firstName }} {{ user.lastName }}</p>
+            <p><strong>E-posta:</strong> {{ user.email }}</p>
+            <p><strong>Kullanıcı Tipi:</strong> {{ user.role }}</p>
+            </div>
+        </ng-container>
+        </section>
+
+      <section class="profile-section" id="addresses">
+        <h4>Adreslerim</h4>
+
+        <app-loading-spinner *ngIf="isLoadingAddresses"></app-loading-spinner>
+        <div *ngIf="addressError && !isLoadingAddresses && !showNewAddressForm" class="error-message">
+          {{ addressError }}
+        </div>
+
+        <div class="address-list" *ngIf="(addresses$ | async) as addresses">
+          <div *ngIf="addresses.length > 0; else noAddresses">
+            <div *ngFor="let address of addresses" class="address-card">
+              <div class="address-details">
+                {{ address.street }} <br>
+                {{ address.postalCode }} {{ address.city }} / {{ address.country }} <br>
+                Tel: {{ address.phoneNumber }}
+              </div>
+              <div class="address-actions">
+                <button (click)="editAddress(address)" title="Düzenle">✏️</button>
+                <button (click)="deleteAddress(address.id)" title="Sil">🗑️</button>
+                <button *ngIf="!address.isDefault" (click)="makeDefaultAddress(address.id)" title="Varsayılan Yap" class="default-btn">Varsayılan Yap</button>
+              </div>
+            </div>
+          </div>
+          <ng-template #noAddresses>
+            <p *ngIf="!isLoadingAddresses">Kayıtlı adresiniz bulunmamaktadır.</p>
+          </ng-template>
+        </div>
+
+        <div class="new-address-toggle">
+            <button type="button" class="add-address-btn" (click)="toggleNewAddressForm()" *ngIf="!showNewAddressForm">
+                <i class="icon-plus">➕</i> Yeni Adres Ekle
+            </button>
+        </div>
+
+        <div *ngIf="showNewAddressForm" class="new-address-form-container">
+            <h5>Yeni Adres Ekle</h5>
+            <form [formGroup]="newAddressForm" (ngSubmit)="saveNewAddress()">
+                <div class="form-group">
+                    <label for="na-title">Adres Başlığı*</label>
+                    <input type="text" id="na-title" formControlName="addressTitle" placeholder="Ev Adresim, İş Adresim vb.">
+                    </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="na-fname">Ad*</label>
+                        <input type="text" id="na-fname" formControlName="firstName">
+                    </div>
+                    <div class="form-group">
+                        <label for="na-lname">Soyad*</label>
+                        <input type="text" id="na-lname" formControlName="lastName">
+                    </div>
+                </div>
+                 <div class="form-group">
+                    <label for="na-phone">Telefon Numarası*</label>
+                    <input type="tel" id="na-phone" formControlName="phoneNumber" placeholder="5xxxxxxxxx">
+                 </div>
+                <div class="form-group">
+                    <label for="na-street">Adres Satırı*</label>
+                    <input type="text" id="na-street" formControlName="street" placeholder="Mahalle, cadde, sokak, bina no, daire no">
+                </div>
+                 <div class="form-row">
+                  <div class="form-group">
+                    <label for="na-zip">Posta Kodu*</label>
+                    <input type="text" id="na-zip" formControlName="postalCode">
+                </div>
+                    <div class="form-group">
+                        <label for="na-city">Şehir*</label>
+                        <input type="text" id="na-city" formControlName="city">
+                    </div>
+                    <div class="form-group">
+                        <label for="na-country">Ülke*</label>
+                        <input type="text" id="na-country" formControlName="country">
+                    </div>
+                 </div>
+
+                 <div *ngIf="addressError" class="error-message">
+                    {{ addressError }}
+                 </div>
+                 <app-loading-spinner *ngIf="isSavingAddress"></app-loading-spinner>
+                 <div class="form-actions">
+                     <button type="submit" [disabled]="newAddressForm.invalid || isSavingAddress">
+                         {{ isSavingAddress ? 'Kaydediliyor...' : 'Adresi Kaydet' }}
+                     </button>
+                     <button type="button" class="cancel-btn" (click)="toggleNewAddressForm()" [disabled]="isSavingAddress">
+                         İptal
+                     </button>
+                 </div>
+            </form>
+        </div>
+
+      </section> </main> </div> </div>

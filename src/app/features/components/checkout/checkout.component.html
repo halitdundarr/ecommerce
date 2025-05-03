@@ -1,0 +1,75 @@
+<div class="checkout-container">
+  <h2>Siparişi Tamamla</h2>
+
+  <section class="checkout-section address-section">
+      <h3>1. Teslimat Adresi</h3>
+      <app-loading-spinner *ngIf="isLoadingAddresses"></app-loading-spinner>
+      <div *ngIf="addressError && !isLoadingAddresses" class="error-message">{{ addressError }}</div>
+      <div class="address-list" *ngIf="(addresses$ | async) as addresses">
+         <div class="addresses">
+            <div *ngFor="let address of addresses"
+                 class="address-card"
+                 [class.selected]="address.id === selectedAddressId"
+                 (click)="selectAddress(address.id)">
+               </div>
+          </div>
+           <ng-template #noAddresses> <p *ngIf="!isLoadingAddresses && addresses?.length === 0">Kayıtlı adresiniz bulunmamaktadır.</p>
+           </ng-template>
+      </div>
+      <div class="new-address-section">
+         <button type="button" (click)="toggleNewAddressForm()" *ngIf="!showNewAddressForm">...</button>
+          <div *ngIf="showNewAddressForm" class="new-address-form"> ... </div>
+      </div>
+  </section> <section class="checkout-section payment-section">
+      <h3>2. Ödeme Yöntemi</h3>
+       <div class="payment-methods">
+          <div *ngFor="let method of paymentMethods"
+               class="payment-method-card"
+               [class.selected]="method === selectedPaymentMethod"
+               (click)="selectPaymentMethod(method)">
+               <i class="icon-payment-{{method.toLowerCase()}}"></i> <span>{{ method === 'CREDIT_CARD' ? 'Kredi/Banka Kartı' : (method === 'BANK_TRANSFER' ? 'Havale/EFT' : method) }}</span>
+          </div>
+          <div *ngIf="selectedPaymentMethod === 'CREDIT_CARD'" class="credit-card-form-placeholder">
+              <p>(Kredi Kartı Formu Buraya Gelecek - Şimdilik Placeholder)</p>
+              </div>
+       </div>
+  </section> <section class="checkout-section order-summary-section">
+    <h3>3. Sipariş Özeti</h3>
+    <ng-container *ngIf="cart$ | async as cart; else cartError">
+        <div *ngIf="cart && cart.items.length > 0" class="summary-details">
+             <ul class="summary-item-list">
+                <li *ngFor="let item of cart.items">
+                    <span>{{item.quantity}} x {{ item.product.name }}</span>
+                    <span>{{ item.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+                </li>
+             </ul>
+             <hr>
+             <div class="summary-row">
+                <span>Ara Toplam</span>
+                <span>{{ cart.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+             </div>
+             <div class="summary-row">
+                <span>Kargo</span>
+                <span>Ücretsiz</span> </div>
+             <div class="summary-row total">
+                <span>Genel Toplam</span>
+                <span>{{ cart.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
+             </div>
+        </div>
+         <div *ngIf="!cart || cart.items.length === 0">
+             <p>Sepetiniz boş.</p>
+         </div>
+    </ng-container>
+    <ng-template #cartError> <p>Sipariş özeti yüklenemedi.</p> </ng-template>
+</section> <div *ngIf="orderError" class="error-message final-error">
+      {{ orderError }}
+  </div>
+
+  <div class="checkout-actions">
+      <button (click)="placeOrder()" [disabled]="isPlacingOrder">
+          <span *ngIf="!isPlacingOrder">Siparişi Ver</span>
+          <span *ngIf="isPlacingOrder">Sipariş Veriliyor...</span>
+          </button>
+  </div>
+
+</div>

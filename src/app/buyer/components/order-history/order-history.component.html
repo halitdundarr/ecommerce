@@ -1,0 +1,49 @@
+<div class="order-history-container">
+  <h2>Siparişlerim</h2>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(orders$ | async) as orders; else loadErrorOrEmpty">
+    <div *ngIf="orders.length > 0; else noOrders" class="order-list">
+      <div *ngFor="let order of orders" class="order-card">
+        <div class="order-header">
+          <div class="order-info">
+            <span>Sipariş No: <strong>{{ order.id }}</strong></span>
+            <span>Tarih: {{ order.orderDate | date:'dd.MM.yyyy HH:mm' }}</span>
+          </div>
+          <div class="order-status" [ngClass]="getStatusClass(order.status)">
+            {{ order.status }} </div>
+        </div>
+        <div class="order-summary">
+          <div class="order-items-preview" *ngIf="order.items && order.items.length > 0">
+            <img *ngFor="let item of order.items.slice(0, 3)"
+                 [src]="item.product.imageUrl || 'https://via.placeholder.com/40?text=?'"
+                 [alt]="item.product.name"
+                 title="{{item.product.name}} (x{{item.quantity}})">
+             <span *ngIf="order.items.length > 3">...</span>
+         </div>
+          <div class="order-total">
+            Toplam: <strong>{{ order.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</strong>
+          </div>
+          <div class="order-actions">
+            <a [routerLink]="['/buyer/orders', order.id]" class="details-button"> Sipariş Detayları
+            </a>
+            </div>
+        </div>
+      </div> </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+           <ng-container *ngTemplateOutlet="noOrders"></ng-container>
+      </div>
+  </ng-template>
+
+  <ng-template #noOrders>
+    <div class="no-orders">
+      <p>Henüz hiç sipariş vermediniz.</p>
+      <a routerLink="/products">Hemen Alışverişe Başla</a>
+    </div>
+  </ng-template>
+</div>

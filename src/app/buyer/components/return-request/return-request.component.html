@@ -1,0 +1,64 @@
+<div class="return-request-container">
+  <h3>İade Talebi Oluştur</h3>
+
+  <app-loading-spinner *ngIf="isLoadingDetails"></app-loading-spinner>
+
+  <div *ngIf="!isLoadingDetails && error && !successMessage" class="error-message main-error">
+    {{ error }}
+    <button (click)="goBackToOrder()" class="back-btn">Sipariş Detayına Dön</button>
+  </div>
+
+  <div *ngIf="successMessage" class="success-message">
+       {{ successMessage }}
+       <p>Birkaç saniye içinde sipariş detayına yönlendirileceksiniz...</p>
+   </div>
+
+  <div *ngIf="!isLoadingDetails && !error && !successMessage && order && itemToReturn">
+
+    <div class="item-info-summary">
+      <h4>İade Edilecek Ürün</h4>
+      <div class="item-details">
+        <img [src]="itemToReturn.product.imageUrl || 'https://via.placeholder.com/80?text=?'"
+             [alt]="itemToReturn.product.name">
+        <div>
+          <strong>{{ itemToReturn.product.name }}</strong><br>
+          <span>Sipariş No: {{ order.id }}</span><br>
+          <span>Adet: {{ itemToReturn.quantity }}</span>
+        </div>
+      </div>
+    </div>
+
+    <form [formGroup]="returnForm" (ngSubmit)="onSubmit()">
+
+      <div class="form-group">
+        <label for="reason">İade Nedeni*</label>
+        <select id="reason" formControlName="reason" [class.is-invalid]="reason?.invalid && (reason?.dirty || reason?.touched)">
+          <option value="" disabled>-- Neden Seçin --</option>
+          <option *ngFor="let r of returnReasons" [value]="r">{{ r }}</option>
+        </select>
+        <div *ngIf="reason?.invalid && (reason?.dirty || reason?.touched)" class="invalid-feedback">
+          İade nedeni seçmek zorunludur.
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="comment">Ek Açıklama (İsteğe Bağlı)</label>
+        <textarea id="comment" formControlName="comment" rows="4" placeholder="İade talebinizle ilgili ek bilgi vermek isterseniz buraya yazabilirsiniz..."></textarea>
+      </div>
+
+       <div *ngIf="error && isSubmitting" class="error-message form-error">
+         {{ error }}
+       </div>
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="returnForm.invalid || isSubmitting">
+          <span *ngIf="!isSubmitting">İade Talebi Gönder</span>
+          <app-loading-spinner *ngIf="isSubmitting" style="display: inline-block; vertical-align: middle; margin-left: 5px; transform: scale(0.5);"></app-loading-spinner>
+        </button>
+        <button type="button" (click)="goBackToOrder()" class="cancel-btn" [disabled]="isSubmitting">
+          İptal / Geri Dön
+        </button>
+      </div>
+
+    </form>
+  </div> </div>

@@ -1,0 +1,59 @@
+<div class="product-management-container">
+  <div class="page-header">
+    <h3>Ürün Yönetimi</h3>
+    <button class="add-new-btn" routerLink="new"> <i class="icon-plus">➕</i> Yeni Ürün Ekle
+    </button>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-indicator">Ürünler yükleniyor...</div>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <ng-container *ngIf="(products$ | async) as products; else loadErrorOrEmpty">
+     <div *ngIf="products.length > 0; else noProducts" class="product-table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Görsel</th>
+              <th>Ürün Adı</th>
+              <th>Kategori</th>
+              <th>Fiyat</th>
+              <th>Stok</th>
+              <th>Durum</th> <th>Aksiyonlar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of products">
+              <td>{{ product.id }}</td>
+              <td>
+                <img [src]="product.images?.[0]?.imageUrl || 'https://via.placeholder.com/40?text=?'"
+                     [alt]="product.name" class="product-thumbnail">
+              </td>
+              <td>{{ product.name }}</td>
+              <td>{{ product.category?.name || '---' }}</td> <td>{{ product.price | currency:'TRY':'symbol':'1.2-2' }}</td>
+              <td>{{ product.stockQuantity ?? 'N/A' }}</td> <td>
+                <span class="status-badge status-active">Aktif</span> </td>
+                <td class="actions">
+                  <button class="action-btn edit-btn" [routerLink]="['edit', product.id]" title="Düzenle"
+                          [disabled]="actionLoading[product.id.toString()]">✏️</button> <button class="action-btn delete-btn"
+                          (click)="deleteProduct(product.id, product.name)"
+                          title="Sil"
+                          [disabled]="actionLoading[product.id.toString()]"> <span *ngIf="!actionLoading[product.id.toString()]">🗑️</span>
+                          <span *ngIf="actionLoading[product.id.toString()]">...</span> </button>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+     </div>
+  </ng-container>
+
+  <ng-template #loadErrorOrEmpty>
+      <div *ngIf="!isLoading && !error">
+           <ng-container *ngTemplateOutlet="noProducts"></ng-container>
+      </div>
+  </ng-template>
+  <ng-template #noProducts>
+      <p>Gösterilecek ürün bulunamadı.</p>
+  </ng-template>
+
+</div>

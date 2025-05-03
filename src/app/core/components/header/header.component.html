@@ -1,0 +1,59 @@
+<header class="app-header">
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <a routerLink="/">
+        <img src="assets/images/logo-placeholder.png" alt="Site Logosu">
+        </a>
+    </div>
+
+    <form class="search-bar" #searchForm="ngForm" (ngSubmit)="onSearchSubmit(searchInput.value)">
+      <input
+        type="text"
+        placeholder="Ürün, kategori veya marka ara..."
+        #searchInput
+        name="searchTerm"
+        ngModel
+        aria-label="Arama terimi">
+      <button type="submit" aria-label="Ara">Ara</button>
+    </form>
+
+    <div class="navbar-links">
+
+      <ng-container *ngIf="!(isLoggedIn$ | async)">
+        <a routerLink="/auth/login" class="nav-link">
+          <i class="icon-user">👤</i> <span>Giriş Yap</span>
+        </a>
+        </ng-container>
+
+      <ng-container *ngIf="isLoggedIn$ | async as loggedIn">
+        <ng-container *ngIf="currentUser$ | async as user"> <div class="dropdown">
+            <a href="#" class="nav-link" aria-haspopup="true" aria-expanded="false" (click)="$event.preventDefault()"> <i class="icon-user">👤</i> <span>{{ user?.firstName || 'Hesabım' }}</span> <i class="icon-down-arrow">▼</i> </a>
+            <div class="dropdown-content">
+               <ng-container *ngIf="user?.role === 'CUSTOMER'">
+                   <a routerLink="/buyer/profile">Profilim</a>
+                   <a routerLink="/buyer/orders">Siparişlerim</a>
+                   <a routerLink="/buyer/returns">İade Taleplerim</a> </ng-container>
+               <a *ngIf="user?.role === 'ADMIN'" routerLink="/admin">Admin Paneli</a>
+               <a *ngIf="user?.role === 'SELLER'" routerLink="/seller">Satıcı Paneli</a>
+               <hr *ngIf="user?.role !== 'CUSTOMER'"> <a href="#" (click)="logout(); $event.preventDefault()">Çıkış Yap</a> </div>
+          </div> <ng-container *ngIf="user?.role === 'CUSTOMER'">
+              <a routerLink="/buyer/wishlist" class="nav-link">
+                <i class="icon-heart">❤️</i> <span>Listem</span>
+                <ng-container *ngIf="(wishlistItemCount$ | async) as count">
+                    <span *ngIf="count > 0" class="nav-badge wishlist-badge">{{ count }}</span>
+                </ng-container>
+              </a>
+
+              <a routerLink="/products/compare" class="nav-link compare-link" *ngIf="(comparisonItemCount$ | async) as count; "> <i class="icon-compare">⚖️</i> <span>Karşılaştır</span>
+                 <span *ngIf="count > 0" class="nav-badge compare-badge">{{ count }}</span>
+              </a>
+
+              <a routerLink="/cart" class="nav-link">
+                <i class="icon-shopping-cart">🛒</i> <span>Sepetim</span>
+                <ng-container *ngIf="(cartItemCount$ | async) as count">
+                    <span *ngIf="count > 0" class="nav-badge cart-badge">{{ count }}</span>
+                </ng-container>
+              </a>
+          </ng-container>
+           </ng-container> </ng-container> </div> </nav>
+</header>

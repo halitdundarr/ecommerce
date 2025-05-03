@@ -1,0 +1,11 @@
+<div class="user-transactions-container">
+  <h3>{{ userName }} - İşlem Geçmişi (Siparişler)</h3>
+  <button routerLink="/admin/users" class="back-button">&larr; Kullanıcı Listesine Dön</button>
+
+  <app-loading-spinner *ngIf="isLoading"></app-loading-spinner>
+  <div *ngIf="error && !isLoading" class="error-message">{{ error }}</div>
+
+  <div *ngIf="!isLoading && !error">
+    <p><i>Kullanıcının sipariş listesi burada gösterilecek...</i></p>
+    </div>
+</div>

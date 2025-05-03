@@ -1,0 +1,115 @@
+// Merkezi değişkenleri import edin: @use '../../../styles/variables' as *;
+$border-color: #dee2e6;
+$danger-color: #dc3545;
+$success-color: #28a745;
+$primary-color: #007bff; // Kaydet butonu için
+$text-color-muted: #6c757d;
+$spacing-unit: 1rem;
+
+.product-form-container {
+  max-width: 700px; // Form genişliği
+  margin: 1rem auto;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+  h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem; // Form grupları arası boşluk
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem; // Label ve input arası
+
+  label {
+    font-weight: 500;
+    font-size: 0.9em;
+  }
+
+  input[type="text"],
+  input[type="number"],
+  textarea,
+  select {
+    width: 100%; // Tam genişlik
+    padding: 0.7rem;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+    font-size: 0.95em;
+    &:focus {
+       outline: none;
+       border-color: $primary-color;
+       box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+    }
+    // Geçersiz inputlar için (opsiyonel)
+    // &.ng-invalid.ng-touched { border-color: $danger-color; }
+  }
+
+  textarea {
+    resize: vertical; // Sadece dikeyde boyutlandırılsın
+    min-height: 80px;
+  }
+
+  .error-text {
+      color: $danger-color;
+      font-size: 0.8em;
+      small { display: block;} // Hatalar alt alta
+  }
+}
+
+// Yan yana alanlar için (Fiyat, Stok gibi)
+.form-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    .form-group {
+        flex: 1; // Eşit dağıt
+        min-width: 150px;
+    }
+}
+
+ .api-error { // Genel API hata mesajı
+    color: $danger-color;
+    background-color: lighten($danger-color, 40%);
+    border: 1px solid lighten($danger-color, 20%);
+    padding: $spacing-unit;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9em;
+  }
+
+.form-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end; // Butonları sağa yasla
+  gap: 1rem;
+
+  button {
+     padding: 0.7rem 1.5rem;
+     border-radius: 4px;
+     cursor: pointer;
+     border: none;
+     font-weight: 500;
+  }
+  button[type="submit"] {
+     background-color: $primary-color;
+     color: white;
+     &:disabled { background-color: #aaa; cursor: not-allowed;}
+     &:hover:not(:disabled) { background-color: darken($primary-color, 10%);}
+  }
+  .cancel-btn {
+     background-color: #6c757d;
+     color: white;
+     &:hover { background-color: darken(#6c757d, 10%);}
+  }
+}

@@ -1,0 +1,142 @@
+// login.component.scss ile aynı stilleri veya benzerlerini kullanabilirsiniz.
+// Değişkenler
+$primary-color: #f27a1a;
+$error-color: #dc3545;
+$success-color: #28a745; // Başarı mesajı için
+$input-border-color: #ced4da;
+$text-color: #333;
+$container-max-width: 450px; // Biraz daha geniş olabilir
+$spacing-unit: 1rem;
+
+// Ana Kapsayıcı (Login ile aynı)
+.register-container { // Sınıf adını değiştirebilirsiniz (örn: .auth-container)
+  max-width: $container-max-width;
+  margin: ($spacing-unit * 2) auto;
+  padding: ($spacing-unit * 2);
+  border: 1px solid #eee;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+
+  h2 {
+    text-align: center;
+    margin-bottom: 0.5rem; // Başlık ve paragraf arasını azalt
+    color: $text-color;
+  }
+  p { // Alt başlık
+      text-align: center;
+      margin-bottom: ($spacing-unit * 1.5);
+      font-size: 0.95em;
+      color: lighten($text-color, 30%);
+  }
+}
+
+// Form Stilleri (Login ile aynı)
+form {
+  display: flex;
+  flex-direction: column;
+  gap: ($spacing-unit * 1.2);
+
+  // Ad/Soyad için yan yana layout
+  .form-row {
+      display: flex;
+      gap: $spacing-unit; // Yan yana elemanlar arası boşluk
+      flex-wrap: wrap; // Küçük ekranda alt alta
+      .form-group {
+          flex: 1; // Eşit genişlik
+          min-width: 150px; // Minimum genişlik
+      }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: ($spacing-unit / 3);
+
+    label {
+      font-weight: bold;
+      font-size: 0.9em;
+      color: darken($text-color, 10%);
+    }
+
+    input {
+      padding: ($spacing-unit * 0.75) $spacing-unit;
+      border: 1px solid $input-border-color;
+      border-radius: 4px;
+      font-size: 1em;
+      transition: border-color 0.2s ease-in-out;
+
+      &:focus {
+        outline: none;
+        border-color: lighten($primary-color, 15%);
+        box-shadow: 0 0 0 2px rgba($primary-color, 0.2);
+      }
+
+      &.is-invalid {
+        border-color: $error-color;
+      }
+    }
+  }
+
+  .invalid-feedback {
+    color: $error-color;
+    font-size: 0.8em;
+    margin-top: ($spacing-unit / 4);
+  }
+
+  // Hata / Başarı Mesajları
+  .error-message, .success-message {
+    background-color: lighten($error-color, 40%);
+    border: 1px solid lighten($error-color, 20%);
+    color: darken($error-color, 10%);
+    padding: $spacing-unit;
+    border-radius: 4px;
+    text-align: center;
+    margin-top: $spacing-unit;
+    font-size: 0.9em;
+  }
+   .success-message {
+      background-color: lighten($success-color, 45%);
+      border: 1px solid lighten($success-color, 30%);
+      color: darken($success-color, 10%);
+   }
+
+
+  button[type="submit"] {
+    padding: ($spacing-unit * 0.8) $spacing-unit;
+    background-color: $primary-color;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, opacity 0.2s ease-in-out;
+    margin-top: ($spacing-unit / 2);
+
+    &:hover:not(:disabled) {
+      background-color: darken($primary-color, 10%);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .extra-links { // Giriş yap linki
+    margin-top: $spacing-unit;
+    text-align: center;
+    font-size: 0.9em;
+
+    a {
+      color: $primary-color;
+      text-decoration: none;
+      margin-left: 5px;
+      font-weight: 500;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+}

@@ -1,0 +1,200 @@
+@use 'sass:math'; // Modern bölme işlemi için
+@use 'sass:color'; // Modern renk fonksiyonları için
+
+// Değişkenler (styles.scss'ten alınabilir veya burada tanımlanabilir)
+$header-bg: #ffffff;
+$header-text-color: #484848;
+$primary-color: #ff6000; // Hepsiburada turuncusu (yaklaşık)
+$border-color: #e0e0e0;
+$header-height: 60px; // Yaklaşık header yüksekliği
+$spacing-unit: 1rem; // 16px
+$badge-bg: $primary-color; // Ana badge arkaplan rengi
+$wishlist-badge-bg: darken($badge-bg, 10%); // Wishlist için biraz farklı ton
+$compare-badge-bg: #007bff; // Karşılaştırma badge'i için mavi renk
+$link-hover-bg: #f8f9fa; // Linklerin üzerine gelince hafif gri arkaplan
+
+.app-header {
+  background-color: $header-bg;
+  border-bottom: 1px solid $border-color;
+  position: sticky; // Sayfa kaydırılsa bile üstte kalması için (isteğe bağlı)
+  top: 0;
+  z-index: 1000; // Diğer öğelerin üzerinde kalması için
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; // Öğeleri aralıklı dağıt
+  height: $header-height;
+  max-width: 1400px; // İçeriği sınırla (isteğe bağlı)
+  margin: 0 auto; // Ortala
+  padding: 0 math.div($spacing-unit, 1.5); // Yan boşluklar
+  gap: $spacing-unit; // Öğeler arası boşluk
+}
+
+// Logo Alanı
+.navbar-brand {
+  a {
+    display: inline-block; // Resmin boyutunu kontrol etmek için
+    height: math.div($header-height, 1.5); // Logo yüksekliği (header'dan biraz küçük)
+    img {
+      height: 100%;
+      width: auto; // Orantıyı koru
+      vertical-align: middle; // Dikey ortalama
+    }
+    span { // Eğer logo yerine metin kullanırsanız
+      font-size: 1.5em;
+      font-weight: bold;
+      color: $primary-color;
+      vertical-align: middle;
+    }
+  }
+}
+
+// Arama Çubuğu
+.search-bar {
+  flex-grow: 1; // Kalan alanı doldur
+  display: flex;
+  max-width: 600px; // Maksimum genişlik
+
+  input[type="text"] {
+    flex-grow: 1;
+    padding: math.div($spacing-unit, 1.8) $spacing-unit;
+    border: 1px solid $border-color;
+    border-right: none;
+    border-radius: 4px 0 0 4px; // Sol köşeleri yuvarla
+    font-size: 0.9em;
+    &:focus {
+      outline: none;
+      border-color: $primary-color;
+      // Opsiyonel: Odaklanınca hafif gölge
+      // box-shadow: 0 0 0 2px rgba($primary-color, 0.1);
+    }
+  }
+
+  button {
+    padding: 0 $spacing-unit;
+    border: 1px solid $primary-color;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 0 4px 4px 0; // Sağ köşeleri yuvarla
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: color.adjust($primary-color, $lightness: -10%);
+    }
+  }
+}
+
+// Sağ Linkler Alanı
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: math.div($spacing-unit, 1.2); // Linkler arası boşluk
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: math.div($spacing-unit, 4); // İkon ve metin arası boşluk
+    color: $header-text-color;
+    font-size: 0.9em;
+    padding: math.div($spacing-unit, 3);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    position: relative; // Badge konumlandırması için
+    text-decoration: none; // Alt çizgiyi kaldır
+
+    &:hover {
+      background-color: $link-hover-bg; // Hafif gri arkaplan
+    }
+
+    i { // İkonlar için temel stil (FontAwesome vb. sınıfları eklenmeli)
+      font-size: 1.2em; // İkon boyutu
+      line-height: 1; // Dikey hizalama için
+    }
+
+    // Genel Badge Stili
+    .nav-badge {
+        display: inline-block;
+        color: white;
+        font-size: 0.75em; // Küçük font
+        font-weight: bold;
+        padding: 2px 6px; // İç boşluk
+        border-radius: 10px; // Yuvarlak köşeler
+        margin-left: 4px; // Metinden sonra boşluk (Position: absolute kullanmazsak)
+        line-height: 1; // Satır yüksekliğini ayarla
+        min-width: 18px; // Tek haneli sayılar için minimum genişlik
+        text-align: center;
+        // position: absolute; // Linkin köşesine konumlandırmak için (isteğe bağlı)
+        // top: -2px;
+        // right: -5px;
+    }
+
+    // Farklı Badge Renkleri
+    .cart-badge { background-color: $badge-bg; }
+    .wishlist-badge { background-color: $wishlist-badge-bg; }
+    .compare-badge { background-color: $compare-badge-bg; }
+
+  } // .nav-link sonu
+
+
+  // Kullanıcı Menüsü Dropdown
+  .dropdown {
+    position: relative; // İçerik konumlandırması için
+
+    // Dropdown'u tetikleyen link (Hesabım vb.)
+    .nav-link {
+      cursor: default; // Tıklandığında bir yere gitmiyorsa
+      &:hover {
+         background-color: $link-hover-bg;
+      }
+    }
+
+    .dropdown-content {
+      display: none; // Normalde gizli
+      position: absolute;
+      top: 100%; // Linkin hemen altına
+      right: 0;
+      background-color: white;
+      min-width: 160px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1;
+      border-radius: 4px;
+      overflow: hidden; // Köşeleri düzgün göster
+      border: 1px solid $border-color; // Hafif border
+
+      a {
+        display: block;
+        padding: math.div($spacing-unit, 1.5) $spacing-unit;
+        font-size: 0.9em;
+        color: $header-text-color;
+        text-decoration: none;
+        &:hover {
+          background-color: #f1f1f1;
+        }
+      }
+    }
+
+    // Dropdown'un üzerine gelince içeriği göster
+    &:hover .dropdown-content {
+      display: block;
+    }
+  } // .dropdown sonu
+} // .navbar-links sonu
+
+// İkon Sınıfları (Örnek - Gerçek ikon kütüphanesi kullanılmalı)
+// Bu sınıfları FontAwesome gibi bir kütüphaneden almanız veya kendi ikonlarınızı tanımlamanız gerekir.
+// Aşağıdakiler sadece placeholder'dır ve HTML'deki ikonlarla eşleşmeyebilir.
+.icon-user::before { content: "👤"; /* Placeholder */ }
+.icon-heart::before { content: "❤️"; /* Placeholder */ }
+.icon-shopping-cart::before { content: "🛒"; /* Placeholder */ }
+.icon-compare::before { content: "⚖️"; /* Placeholder */ }
+.icon-down-arrow::before { content: "▼"; font-size: 0.7em; margin-left: 4px; /* Placeholder */ }
+// Footer'da kullanılanlar
+.icon-facebook::before { content: "f"; /* Placeholder */}
+.icon-twitter::before { content: "t"; /* Placeholder */}
+.icon-instagram::before { content: "i"; /* Placeholder */}
+
+// Kategori Menüsü (Daha sonra eklenecekse)
+// .category-menu { ... }

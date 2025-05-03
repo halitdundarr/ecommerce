@@ -1,0 +1,63 @@
+<div class="login-container">
+  <h2>Giriş Yap</h2>
+
+  <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+
+    <div class="form-group">
+      <label for="email">E-posta</label>
+      <input
+        type="email"
+        id="email"
+        formControlName="email"
+        placeholder="E-posta adresinizi girin"
+        [ngClass]="{ 'is-invalid': email?.invalid && (email?.dirty || email?.touched) }"
+        aria-describedby="email-error"> <div *ngIf="email?.invalid && (email?.dirty || email?.touched)" class="invalid-feedback" id="email-error">
+        <div *ngIf="email?.errors?.['required']">
+          E-posta alanı zorunludur.
+        </div>
+        <div *ngIf="email?.errors?.['email']">
+          Geçerli bir e-posta adresi girin.
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Şifre</label>
+      <input
+        type="password"
+        id="password"
+        formControlName="password"
+        placeholder="Şifrenizi girin"
+        [ngClass]="{ 'is-invalid': password?.invalid && (password?.dirty || password?.touched) }"
+        aria-describedby="password-error"> <div *ngIf="password?.invalid && (password?.dirty || password?.touched)" class="invalid-feedback" id="password-error">
+        <div *ngIf="password?.errors?.['required']">
+          Şifre alanı zorunludur.
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+
+    <button type="submit" [disabled]="loginForm.invalid || isLoading">
+      {{ isLoading ? 'Giriş Yapılıyor...' : 'Giriş Yap' }}
+    </button>
+
+    <div class="extra-links">
+      <span>Hesabınız yok mu?</span>
+      <a routerLink="../register">Hemen Kayıt Olun</a>
+      </div>
+
+  </form>
+
+  <div style="margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1rem; text-align: center;">
+      <h4 style="margin-bottom: 0.5rem; font-size: 0.9em; color: #666;">Test İçin Sahte Girişler (Geçici)</h4>
+      <div class="mock-logins" style="display: flex; justify-content: space-around; gap: 0.5rem; flex-wrap: wrap;">
+        <button type="button" (click)="mockLoginAdmin()" style="font-size: 0.8em; padding: 0.4rem 0.8rem;">Admin Olarak Gir</button>
+        <button type="button" (click)="mockLoginSeller()" style="font-size: 0.8em; padding: 0.4rem 0.8rem;">Satıcı Olarak Gir</button>
+        <button type="button" (click)="mockLoginCustomer()" style="font-size: 0.8em; padding: 0.4rem 0.8rem;">Müşteri Olarak Gir</button>
+      </div>
+      <button type="button" (click)="mockLogout()" style="margin-top: 0.8rem; width: 90%; font-size: 0.8em; padding: 0.4rem 0.8rem; background-color: #6c757d; color: white; border: none; border-radius: 3px;">Çıkış Yap (Test)</button>
+  </div>
+  </div>

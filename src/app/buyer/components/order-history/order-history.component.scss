@@ -1,0 +1,137 @@
+@use 'sass:math';
+@use 'sass:color';
+
+$danger-color: #dc3545;
+$border-color: #e0e0e0;
+$primary-color: #ff6000;
+$link-color: #007bff;
+$status-delivered: #28a745;
+$status-shipped: #17a2b8;
+$status-processing: #ffc107;
+$status-cancelled: #dc3545; // danger-color ile aynı olabilir
+$status-pending: #6c757d;
+$text-color-dark: #343a40;
+$text-color-muted: #6c757d;
+
+
+.order-history-container {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 1rem;
+
+  h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 500;
+  }
+}
+
+.loading-indicator, .error-message, .no-orders {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+.error-message { color: $danger-color;}
+.no-orders a { color: $primary-color; font-weight: 500; text-decoration: underline; }
+
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; // Kartlar arası boşluk
+}
+
+.order-card {
+  background-color: #fff;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  overflow: hidden; // İçerik taşmasını engelle
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background-color: #f8f9fa; // Başlık için hafif arkaplan
+  border-bottom: 1px solid $border-color;
+  font-size: 0.9em;
+  flex-wrap: wrap; // Küçük ekranda alt alta geçebilir
+  gap: 0.5rem;
+
+  .order-info {
+    display: flex;
+    gap: 1.5rem; // Sipariş no ve tarih arası boşluk
+    color: #6c757d;
+    strong { color: #343a40;}
+  }
+
+  .order-status {
+    font-weight: bold;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px; // Oval kenar
+    font-size: 0.85em;
+    color: white;
+    text-align: center;
+
+    &.status-delivered { background-color: $status-delivered; }
+    &.status-shipped { background-color: $status-shipped; }
+    &.status-processing { background-color: $status-processing; color: #333; }
+    &.status-cancelled { background-color: $status-cancelled; }
+    &.status-pending { background-color: $status-pending; }
+  }
+}
+
+.order-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.order-items-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-grow: 1; // Mümkün olduğunca yayılsın
+
+  img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    border: 1px solid $border-color;
+    border-radius: 4px;
+  }
+  span { // ... için
+      font-weight: bold;
+      color: $text-color-muted;
+  }
+}
+
+.order-total {
+  font-size: 1.1em;
+  text-align: right;
+  min-width: 120px; // Hizalama için
+  strong { color: $text-color-dark;}
+}
+
+.order-actions {
+  text-align: right;
+  min-width: 120px; // Hizalama için
+
+  .details-button {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 0.9em;
+    background-color: $primary-color;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+
+     &:hover { background-color: color.adjust($primary-color, $lightness: -10%);}
+  }
+}

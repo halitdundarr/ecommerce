@@ -1,0 +1,236 @@
+// Gerekli Sass modüllerini import et
+@use 'sass:math';
+@use 'sass:color';
+
+// Değişkenler
+$primary-color: #ff6000; // Ana renk (turuncu)
+$secondary-color: #007bff; // İkincil renk (mavi - sepete ekle)
+$border-color-light: #eee;
+$border-color-medium: #ddd;
+$text-color-dark: #333;
+$text-color-medium: #555;
+$text-color-light: #666;
+$error-color: #dc3545; // Hata rengi (kırmızı)
+$success-color: #28a745; // Başarı rengi (yeşil - stokta var)
+$rating-color: #f8b400; // Puanlama rengi (sarı)
+$wishlist-color: #e74c3c; // İstek listesi rengi (kırmızı)
+$wishlist-bg-active: #fcedea; // İstek listesi aktif arka plan
+$button-disabled-bg: #aaa;
+$spacing-unit: 1rem;
+
+.product-detail-container {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 1rem auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+
+  .back-button { // Ürün listesine geri dön butonu
+      background: none;
+      border: none;
+      color: $secondary-color;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      display: inline-block;
+      font-size: 0.9em;
+      &:hover { text-decoration: underline; }
+  }
+}
+
+.loading-indicator, .error-message {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2em;
+  color: $text-color-light;
+}
+.error-message {
+    color: $error-color;
+    a { color: $secondary-color;} // Link rengi
+}
+
+
+.product-layout {
+  display: grid;
+  // Geniş ekranlarda iki sütun (galeri | bilgi)
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); // Daha esnek minmax
+  gap: 2.5rem; // Sütunlar arası boşluk
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr; // Küçük ekranlarda tek sütun
+    gap: 1.5rem; // Boşluğu azalt
+  }
+}
+
+// Ürün Galerisi Stilleri
+.product-gallery {
+  .main-image {
+    width: 100%;
+    max-width: 500px; // Maksimum genişlik biraz daha büyük olabilir
+    height: auto;
+    border: 1px solid $border-color-light;
+    border-radius: 4px;
+    display: block;
+    margin: 0 auto 1rem auto; // Ortala ve alt boşluk
+    object-fit: contain; // Orantıyı koru
+    min-height: 300px; // Minimum yükseklik
+  }
+  .thumbnails {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem; // Küçük resimler arası boşluk
+    justify-content: center;
+    img {
+      width: 70px; // Küçük resim boyutu
+      height: 70px;
+      object-fit: cover;
+      border: 2px solid transparent; // Seçili olmayan için şeffaf border
+      border-radius: 4px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      &:hover {
+        border-color: $border-color-medium; // Üzerine gelince border
+      }
+      // Aktif thumbnail için stil eklenebilir (opsiyonel)
+      // &.active { border-color: $primary-color; }
+    }
+  }
+}
+
+// Ürün Bilgileri Stilleri
+.product-info {
+  h1 {
+    font-size: 1.9em; // Biraz daha büyük başlık
+    margin-bottom: 0.6rem;
+    line-height: 1.3;
+  }
+  .rating {
+    margin-bottom: 1rem;
+    color: $text-color-light;
+    span {
+        font-weight: bold;
+        color: $rating-color; // Yıldız ve puan rengi
+    }
+  }
+  .price {
+    font-size: 1.8em; // Daha belirgin fiyat
+    font-weight: bold;
+    color: $primary-color; // Ana renk (turuncu)
+    margin-bottom: 1.2rem;
+  }
+   .stock-status {
+       margin-bottom: 1.5rem;
+       font-weight: bold;
+       font-size: 1.05em;
+       &.in-stock { color: $success-color; } // Yeşil
+       &.out-of-stock { color: $error-color; } // Kırmızı
+       span { // "Son X ürün" yazısı
+           font-size: 0.85em;
+           color: darken($primary-color, 10%);
+           font-weight: normal;
+           margin-left: 8px;
+           font-style: italic;
+       }
+   }
+
+  // Aksiyon Butonları
+  .actions {
+    margin-bottom: 1.8rem; // Alt boşluğu artır
+    display: flex; // Butonları yan yana getir
+    gap: 1rem; // Butonlar arası boşluk
+    align-items: center; // Dikeyde ortala
+    flex-wrap: wrap; // Küçük ekranda alt satıra geçebilir
+
+    button { // Genel buton stilleri
+      padding: 0.8rem 1.5rem;
+      font-size: 1.05em;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s, opacity 0.2s, border-color 0.2s, color 0.2s;
+      display: inline-flex; // İkon ve metni ortala
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      line-height: 1.3; // Satır yüksekliği
+
+      &:disabled {
+          background-color: $button-disabled-bg !important; // Important gerekebilir
+          border-color: $button-disabled-bg !important;
+          color: #fff !important;
+          cursor: not-allowed;
+          opacity: 0.7;
+       }
+    }
+
+    .cart-btn { // Sepete ekle butonu
+      background-color: $secondary-color; // Mavi
+      color: white;
+      &:hover:not(:disabled) { background-color: darken($secondary-color, 10%);}
+    }
+
+    .wishlist-btn { // İstek listesi butonu
+      background-color: #f0f0f0; // Açık gri
+      color: $text-color-medium;
+      border: 1px solid #ccc;
+      padding: 0.8rem 1.2rem; // Biraz daha dar
+
+      i { // İkon
+        font-size: 1.2em;
+        color: #aaa; // Varsayılan (boş kalp)
+        line-height: 1; // İkonun dikey hizalaması için
+      }
+
+      &.in-wishlist {
+        background-color: $wishlist-bg-active; // Açık kırmızımsı arka plan
+        border-color: $wishlist-color;
+        color: $wishlist-color; // Kırmızı metin
+        i { color: $wishlist-color; } // Kırmızı ikon (dolu kalp)
+      }
+
+      &:hover:not(:disabled) {
+         background-color: #e0e0e0;
+         &.in-wishlist {
+             background-color: darken($wishlist-bg-active, 5%);
+             border-color: darken($wishlist-color, 10%);
+         }
+      }
+    }
+  } // .actions sonu
+
+  // Özellikler ve Açıklama Bölümleri
+  .attributes, .description {
+    margin-top: 2rem; // Bölümler arası boşluğu artır
+    h4 {
+      margin-bottom: 0.8rem;
+      border-bottom: 1px solid $border-color-light;
+      padding-bottom: 0.5rem;
+      font-size: 1.2em;
+      font-weight: 500;
+    }
+    ul { // Özellik listesi
+      list-style: none;
+      padding-left: 0;
+      li {
+        margin-bottom: 0.5rem;
+        font-size: 0.95em;
+        strong {
+            color: $text-color-dark;
+            margin-right: 5px;
+        }
+      }
+    }
+    p { // Açıklama paragrafı
+      line-height: 1.7; // Satır aralığını artır
+      color: $text-color-medium;
+      font-size: 0.95em;
+    }
+  }
+} // .product-info sonu
+
+// app-product-reviews component'inin stilini kendi scss dosyasında yönetmek daha iyi
+// ama gerekirse burada da genel stil verilebilir.
+app-product-reviews {
+    display: block; // Tam genişlik almasını sağla
+    margin-top: 2rem; // Üstteki bölümle arasını aç
+}

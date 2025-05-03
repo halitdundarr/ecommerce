@@ -1,0 +1,39 @@
+// Temel CSS Spinner Stili
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem; // Biraz boşluk bırakalım
+  min-height: 100px; // Spinner'ın kaplayacağı minimum yükseklik
+}
+
+.spinner {
+  border: 5px solid rgba(0, 0, 0, 0.1); // Açık renk border
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-left-color: #ff6000; // Ana rengimizle dönen kısım
+  animation: spin 1s linear infinite; // Dönme animasyonu
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+// Ekran okuyucu metnini görsel olarak gizle
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
