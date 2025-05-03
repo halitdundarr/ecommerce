@@ -232,12 +232,5 @@ error: (err) => {
 }
 // === ===
 
-// === YENİ: Şifre Değiştirme Placeholder ===
-changePassword(): void {
-    console.log("Şifre değiştirme sayfasına yönlendirilecek.");
-    alert("Şifre değiştirme işlevi henüz eklenmedi.");
-    // TODO: Şifre değiştirme sayfasına yönlendir
-    // Örnek: this.router.navigate(['/buyer/profile/change-password']);
-}
 
 } // UserProfileComponent sınıfının sonu

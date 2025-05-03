@@ -6,6 +6,7 @@ import { WishlistComponent } from './components/wishlist/wishlist.component';
 import { ReturnRequestComponent } from './components/return-request/return-request.component';
 import { UserProfileComponent } from './components/user-profile/user-profile.component';
 import { ReturnHistoryComponent } from './components/return-history/return-history.component';
+import { ChangePasswordComponent } from './components/change-password/change-password.component';
 // Varsa diğer buyer componentleri (örn: ProfileComponent)
 
 const routes: Routes = [
@@ -16,6 +17,7 @@ const routes: Routes = [
   { path: 'orders/:orderId', component: OrderDetailComponent }, // İleride eklenecek
   { path: 'profile', component: UserProfileComponent }, // <-- YENİ Profil Rotası
   { path: 'returns', component: ReturnHistoryComponent },      // <-- YENİ İade Geçmişi Rotası
+  { path: 'change-password', component: ChangePasswordComponent }, // <-- Yeni rota
     // { path: 'profile', component: ProfileComponent }, // Varsa
   { path: '', redirectTo: 'orders', pathMatch: 'full' } // /buyer'a gelince direkt /buyer/orders'a yönlendir
 ];

@@ -5,7 +5,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'; // HttpParams ekle (gerekirse)
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { Address, UserSummary, Profile } from '../../shared/models/user.model'; // Profile ekle
+import { Address, UserSummary, Profile, ChangePasswordRequest } from '../../shared/models/user.model'; // Profile ekle
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment'; // <-- environment import et
 
@@ -343,6 +343,19 @@ export class UserService {
             return this.handleError(err);
         })
     );
+}
+
+/**
+ * Giriş yapmış kullanıcının şifresini değiştirir.
+ * Backend'de /api/users/change-password gibi bir endpoint olmalı.
+ */
+changePassword(payload: ChangePasswordRequest): Observable<void> { // Backend genellikle bir şey döndürmez (200 OK veya 204 No Content)
+  // Endpoint URL'si backend'e göre ayarlanmalı
+  const url = `${this.API_BASE_URL}/api/users/change-password`; // Örnek endpoint
+  console.log("Sending password change request to:", url);
+  return this.http.post<void>(url, payload).pipe( // POST veya PUT olabilir
+      catchError(this.handleError) // Genel hata yönetimi
+  );
 }
 
 } // UserService sınıfının sonu

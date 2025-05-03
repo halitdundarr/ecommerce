@@ -7,6 +7,11 @@ export interface LoginRequest {
   password: string; // Backend DTO'daki alan ismiyle aynı olmalı
 }
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 // Backend'deki /login endpoint'inden dönen cevaba karşılık gelir.
 // Genellikle JWT token ve bazen temel kullanıcı bilgisi içerir.
 export interface LoginResponse {

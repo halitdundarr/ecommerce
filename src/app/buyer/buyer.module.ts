@@ -11,6 +11,7 @@ import { WishlistComponent } from './components/wishlist/wishlist.component'; //
 import { ReturnRequestComponent } from './components/return-request/return-request.component';
 import { UserProfileComponent } from './components/user-profile/user-profile.component';
 import { ReturnHistoryComponent } from './components/return-history/return-history.component';
+import { ChangePasswordComponent } from './components/change-password/change-password.component';
 
 
 @NgModule({
@@ -20,7 +21,8 @@ import { ReturnHistoryComponent } from './components/return-history/return-histo
     // WishlistComponent, // Eğer WishlistComponent FeaturesModule'deyse buradan kaldırın
     ReturnRequestComponent,
     UserProfileComponent,
-    ReturnHistoryComponent
+    ReturnHistoryComponent,
+    ChangePasswordComponent
   ],
   imports: [
     CommonModule, // <-- Eklendi
