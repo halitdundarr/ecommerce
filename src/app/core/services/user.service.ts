@@ -5,11 +5,11 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'; // HttpParams ekle (gerekirse)
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { Address, UserSummary, Profile, ChangePasswordRequest } from '../../shared/models/user.model'; // Profile ekle
+import { Address, UserSummary, Profile, ChangePasswordRequest } from '../../shared/models/user.model'; // Profile ve ChangePasswordRequest eklendi
 import { AuthService } from './auth.service';
 import { environment } from '../../../environments/environment'; // <-- environment import et
 
-// --- Backend DTO Arayüzleri (Mevcut olanlar iyi görünüyor, backend DTO'larına karşılık geliyor) ---
+// --- Backend DTO Arayüzleri (Backend DTO'larına karşılık geliyor) ---
 interface BackendDtoAddress {
     addressId: number;
     street: string;
@@ -21,21 +21,20 @@ interface BackendDtoAddress {
     isDefault: boolean;
     isBilling: boolean;
     isShipping: boolean;
-    // addressTitle, firstName, lastName frontend modelinde var, DTO'da yok. Map fonksiyonu bunu yönetiyor.
 }
 
-interface BackendDtoUserSummary { // Admin user listesi için
-    userId: number; // Backend'de DtoUserSummary userId içeriyor
+interface BackendDtoUserSummary {
+    userId: number;
     username?: string;
     firstName: string;
     lastName: string;
-    email?: string; // Backend'de DtoUserSummary'de email yok, eklenmeli veya frontend modeli güncellenmeli
-    role?: string; // Backend'de DtoUserSummary'de role yok, eklenebilir veya admin listesi için ayrı DTO kullanılabilir
-    status?: string; // Backend'de DtoUserSummary'de status yok
+    email?: string;
+    role?: string;
+    status?: string;
 }
 
-// Backend DtoProfile (ban/unban yanıtı için)
-interface BackendDtoProfile {
+// Backend DtoProfile
+interface DtoProfile {
     username?: string;
     email?: string;
     firstName?: string;
@@ -43,7 +42,6 @@ interface BackendDtoProfile {
     sex?: string; // Enum string olarak gelebilir
     phoneNumber?: string;
     dateOfBirth?: string | Date;
-    // addresses?: BackendDtoAddress[]; // Adresler ayrı yönetiliyor
     status?: string; // Yasaklama durumu için önemli
 }
 
@@ -75,6 +73,8 @@ export class UserService {
         console.warn('Cannot get addresses: User not logged in.');
         return of([]);
     }
+    // DİKKAT: Backend UserController /api/users/{userId}/addresses bekliyor.
+    // Frontend'in bu path'i kullandığından emin olalım.
     const url = `${this.USER_API_URL}/${userId}/addresses`;
     console.log(`Workspaceing addresses for user ${userId} from ${url}`);
 
@@ -95,6 +95,7 @@ export class UserService {
 
      console.log('Adding address for user', userId);
      const dtoPayload: Partial<BackendDtoAddress> = this.mapAddressToDtoAddressForSave(address);
+     // DİKKAT: Backend UserController /api/users/{userId}/addresses bekliyor.
      const url = `${this.USER_API_URL}/${userId}/addresses`;
 
      return this.http.post<BackendDtoAddress>(url, dtoPayload).pipe(
@@ -111,6 +112,7 @@ export class UserService {
       if (!userId || !address.id) {
           return throwError(() => new Error('Adres güncellemek için kullanıcı girişi ve adres ID gereklidir.'));
       }
+      // DİKKAT: Backend UserController /api/users/{userId}/addresses/{addressId} bekliyor.
       const url = `${this.USER_API_URL}/${userId}/addresses/${address.id}`;
       const dtoPayload: Partial<BackendDtoAddress> = this.mapAddressToDtoAddressForSave(address);
       console.log(`Updating address ${address.id} for user ${userId}`);
@@ -129,6 +131,7 @@ export class UserService {
       if (!userId) {
           return throwError(() => new Error('Adres silmek için kullanıcı girişi gereklidir.'));
       }
+       // DİKKAT: Backend UserController /api/users/{userId}/addresses/{addressId} bekliyor.
       const url = `${this.USER_API_URL}/${userId}/addresses/${addressId}`;
       console.log(`Deleting address ${addressId} for user ${userId}`);
 
@@ -145,6 +148,7 @@ export class UserService {
       if (!userId) {
           return throwError(() => new Error('Varsayılan adres ayarlamak için kullanıcı girişi gereklidir.'));
       }
+      // DİKKAT: Backend UserController /api/users/{userId}/addresses/{addressId}/default bekliyor.
       const url = `${this.USER_API_URL}/${userId}/addresses/${addressId}/default`;
       console.log(`Setting address ${addressId} as default for user ${userId}`);
 
@@ -155,6 +159,30 @@ export class UserService {
       );
   }
 
+  // --- Profil Güncelleme Metodu ---
+  /**
+   * Updates the profile information for the currently authenticated user.
+   * Sends only the updatable fields defined in the Profile model (excluding id, email).
+   */
+  updateUserProfile(userId: number | string, profileData: Partial<Profile>): Observable<Profile> {
+    // DİKKAT: Backend UserController /api/users/{userId}/profile bekliyor.
+    const url = `${this.USER_API_URL}/${userId}/profile`;
+    console.log(`Updating profile for user ${userId} at ${url}`);
+
+    const payload: Partial<DtoProfile> = { // Backend DtoProfile bekliyor
+        firstName: profileData.firstName,
+        lastName: profileData.lastName,
+        phoneNumber: profileData.phoneNumber,
+        dateOfBirth: profileData.dateOfBirth,
+        sex: profileData.sex as string // Enum'ı string'e cast et (backend string bekliyorsa)
+    };
+
+    return this.http.put<DtoProfile>(url, payload).pipe(
+      map(dto => this.mapDtoProfileToProfile(dto)), // Dönen DtoProfile'ı Profile'a map et
+      catchError(this.handleError)
+    );
+  }
+  // --- ---
 
     // --- Kullanıcı Yönetimi Metotları (Admin - Backend Bağlantılı) ---
 
@@ -174,18 +202,17 @@ export class UserService {
      * Bir kullanıcıyı yasaklar (Admin için).
      * Backend DtoProfile döndürüyor.
      */
-    banUser(userId: number): Observable<{ success: boolean, profile?: Profile }> { // Profil bilgisi de dönebilir
+    banUser(userId: number): Observable<{ success: boolean, profile?: Profile }> {
         const url = `${this.ADMIN_USER_API_URL}/${userId}/ban`;
         console.log(`Banning user ${userId} via ${url}`);
-        // Backend DtoProfile döndürüyor
-        return this.http.post<BackendDtoProfile>(url, {}).pipe(
+        return this.http.post<DtoProfile>(url, {}).pipe(
              map(profileDto => ({
                  success: true,
-                 profile: this.mapDtoProfileToProfile(profileDto) // DtoProfile'i frontend modeline çevir
+                 profile: this.mapDtoProfileToProfile(profileDto)
              })),
              catchError(err => {
-                 this.handleError(err); // Hata loglama ve genel mesaj için
-                 return of({ success: false }); // Component'e başarısızlık bilgisi dön
+                 this.handleError(err);
+                 return of({ success: false });
              })
          );
     }
@@ -197,7 +224,7 @@ export class UserService {
     unbanUser(userId: number): Observable<{ success: boolean, profile?: Profile }> {
         const url = `${this.ADMIN_USER_API_URL}/${userId}/unban`;
         console.log(`Unbanning user ${userId} via ${url}`);
-        return this.http.post<BackendDtoProfile>(url, {}).pipe(
+        return this.http.post<DtoProfile>(url, {}).pipe(
              map(profileDto => ({
                  success: true,
                  profile: this.mapDtoProfileToProfile(profileDto)
@@ -217,15 +244,63 @@ export class UserService {
         const url = `${this.ADMIN_USER_API_URL}/${userId}`;
         console.log(`Deleting user ${userId} via ${url}`);
         return this.http.delete<void>(url).pipe(
-            map(() => ({ success: true })), // Başarılı olursa true dön
+            map(() => ({ success: true })),
             catchError(err => {
-                this.handleError(err); // Hata loglama
-                return of({ success: false }); // Başarısızlık durumu
+                this.handleError(err);
+                return of({ success: false });
             })
         );
     }
 
-  // --- DTO <-> Model Dönüşüm Yardımcıları (Mevcutlar korunuyor ve Profile ekleniyor) ---
+    /**
+     * Kullanıcı ID'sine göre özet bilgi getirir (Admin için).
+     */
+    getUserById(userId: number | string): Observable<UserSummary | undefined> {
+        // DİKKAT: Bu endpoint admin yetkisi gerektirir. Backend Controller'da var mı?
+        // AdminUserController'da GET /{userId} yok. GET /api/admin/users tümünü listeliyor.
+        // Belki GET /api/users/{userId}/profile kullanılabilir ama o DtoProfile döndürür.
+        // Şimdilik GET /api/admin/users kullanıp filtrelemeyi deneyelim (çok verimsiz)
+        // VEYA backend'e /api/admin/users/{userId} eklenmeli.
+        // Geçici çözüm:
+        // const url = `${this.ADMIN_USER_API_URL}/${userId}`; // Varsayılan endpoint
+        // console.log(`Workspaceing user summary for ID: ${userId} via ${url}`);
+        // return this.http.get<BackendDtoUserSummary>(url).pipe( // Backend DTO'dan map et
+        //     map(dto => this.mapDtoUserSummaryToUserSummary(dto)),
+        //     catchError(err => {
+        //         if (err.status === 404) return of(undefined);
+        //         return this.handleError(err);
+        //     })
+        // );
+        // Daha iyi çözüm: Tüm kullanıcıları alıp filtrele (eğer backend'de tekil endpoint yoksa)
+        return this.getAllUsers().pipe(
+            map(users => users.find(user => user.id === +userId)), // ID'ye göre filtrele
+             catchError(err => {
+                 return this.handleError(err); // Hata yönetimi
+             })
+        );
+    }
+
+
+    /**
+     * Giriş yapmış kullanıcının şifresini değiştirir.
+     * Backend'de /api/users/change-password veya /api/users/{userId}/password olmalı.
+     * Frontend ChangePasswordComponent /api/users/change-password çağırıyor.
+     * Backend UserController /api/users/{userId}/password bekliyor.
+     * Bu metodu frontend'in çağırdığı yola göre ayarlayalım.
+     */
+    changePassword(payload: ChangePasswordRequest): Observable<void> {
+      // DİKKAT: Backend endpoint'i ile frontend çağrısı eşleşmeli.
+      // Şimdilik frontend'in çağırdığı varsayılan yolu kullanalım.
+      // Belki bir interceptor userId ekliyordur? Ya da backend'de principal'dan alınıyordur.
+      // Eğer backend /api/users/{userId}/password bekliyorsa URL'yi ona göre düzeltmeliyiz.
+      const url = `${this.API_BASE_URL}/api/users/change-password`; // Frontend'in çağırdığı yol
+      console.log("Sending password change request to:", url);
+      return this.http.post<void>(url, payload).pipe(
+          catchError(this.handleError)
+      );
+    }
+
+  // --- DTO <-> Model Dönüşüm Yardımcıları ---
 
   /**
    * Backend Adres DTO'sunu Frontend Adres Modeline çevirir.
@@ -255,6 +330,7 @@ export class UserService {
    * Frontend Adres Modelini Backend Adres DTO'suna (kaydetme/güncelleme için) çevirir.
    */
    private mapAddressToDtoAddressForSave(address: Omit<Address, 'id'>): Partial<BackendDtoAddress> {
+      // Backend DTO'sunda olmayan alanları (addressTitle, firstName, lastName) gönderme
       return {
           street: address.street,
           city: address.city,
@@ -265,14 +341,11 @@ export class UserService {
           isDefault: address.isDefault,
           isBilling: address.isBilling,
           isShipping: address.isShipping
-          // addressTitle, firstName, lastName backend DTO'da yok
       };
   }
 
   /**
    * Backend Kullanıcı Özeti DTO'sunu Frontend Kullanıcı Özeti Modeline çevirir.
-   * Backend DTO'sunun `role` ve `status` içerdiğini varsayıyoruz (AdminUserController.java kontrol edilmeli).
-   * Mevcut BackendDtoUserSummary'de bunlar yok, bu yüzden optional (?) bırakıldı.
    */
   private mapDtoUserSummaryToUserSummary(dto: BackendDtoUserSummary): UserSummary {
         return {
@@ -280,30 +353,34 @@ export class UserService {
             username: dto.username,
             firstName: dto.firstName,
             lastName: dto.lastName,
-            email: dto.email ?? '', // DTO'da email opsiyonel olabilir
-            role: (dto.role as any) ?? 'CUSTOMER', // DTO'da rol yoksa varsayılan ata
-            status: (dto.status as any) ?? 'Active' // DTO'da status yoksa varsayılan ata
+            email: dto.email ?? '',
+            role: (dto.role as any) ?? 'CUSTOMER',
+            status: (dto.status as any) ?? 'Active'
         };
   }
 
    /**
-    * Backend DtoProfile'ı Frontend Profile modeline çevirir (ban/unban yanıtı için).
+    * Backend DtoProfile'ı Frontend Profile modeline çevirir.
     */
-   private mapDtoProfileToProfile(dto: BackendDtoProfile): Profile {
+   private mapDtoProfileToProfile(dto: DtoProfile): Profile {
+       const currentUser = this.authService.currentUserValue; // Mevcut kullanıcı ID'si için
        return {
-           id: 0, // DtoProfile'da ID yok, backend User'dan alınmalıydı. Şimdilik 0.
+           id: currentUser?.id ?? 0, // ID DTO'dan gelmiyor, mevcut kullanıcıdan al
            email: dto.email ?? '',
            firstName: dto.firstName ?? '',
            lastName: dto.lastName ?? '',
            phoneNumber: dto.phoneNumber,
-           // addresses: dto.addresses?.map(a => this.mapDtoAddressToAddress(a)), // Adresler ayrı yönetiliyor
-           // Diğer Profile alanları DtoProfile'dan map edilebilir (sex, dateOfBirth)
+           // DTO'dan gelen diğer alanları ekle (dateOfBirth, sex)
+           dateOfBirth: dto.dateOfBirth,
+           sex: dto.sex as any, // String'i enum'a cast et (frontend enum bekliyorsa)
+           // Adresler ayrı yönetiliyor
+           addresses: []
        };
    }
 
 
   /**
-   * Merkezi Hata Yönetimi Metodu (AuthService'deki ile aynı yapıda)
+   * Merkezi Hata Yönetimi Metodu
    */
   private handleError(error: HttpErrorResponse): Observable<never> {
     let userMessage = 'Bilinmeyen bir kullanıcı işlemi hatası oluştu!';
@@ -317,6 +394,10 @@ export class UserService {
 
       if (backendErrorMessage) {
           userMessage = backendErrorMessage;
+           // Özel hata mesajlarını burada yakalayabiliriz
+           if (userMessage.toLowerCase().includes('incorrect old password')) {
+                userMessage = 'Girdiğiniz mevcut şifre hatalı.';
+            }
       } else {
            switch (error.status) {
                case 400: userMessage = 'Geçersiz istek.'; break;
@@ -331,31 +412,5 @@ export class UserService {
     }
     return throwError(() => new Error(userMessage));
   }
-
-  getUserById(userId: number | string): Observable<UserSummary | undefined> {
-    // Bu endpoint admin yetkisi gerektirebilir
-    const url = `${this.ADMIN_USER_API_URL}/${userId}`; // Veya USER_API_URL? Backend'e bağlı.
-    console.log(`Workspaceing user summary for ID: ${userId}`);
-    return this.http.get<BackendDtoUserSummary>(url).pipe( // Backend DTO'dan map et
-        map(dto => this.mapDtoUserSummaryToUserSummary(dto)),
-        catchError(err => {
-            if (err.status === 404) return of(undefined);
-            return this.handleError(err);
-        })
-    );
-}
-
-/**
- * Giriş yapmış kullanıcının şifresini değiştirir.
- * Backend'de /api/users/change-password gibi bir endpoint olmalı.
- */
-changePassword(payload: ChangePasswordRequest): Observable<void> { // Backend genellikle bir şey döndürmez (200 OK veya 204 No Content)
-  // Endpoint URL'si backend'e göre ayarlanmalı
-  const url = `${this.API_BASE_URL}/api/users/change-password`; // Örnek endpoint
-  console.log("Sending password change request to:", url);
-  return this.http.post<void>(url, payload).pipe( // POST veya PUT olabilir
-      catchError(this.handleError) // Genel hata yönetimi
-  );
-}
 
 } // UserService sınıfının sonu

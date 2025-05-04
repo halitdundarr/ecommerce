@@ -10,7 +10,7 @@
           <li><a routerLink="/buyer/orders" routerLinkActive="active-section">Siparişlerim</a></li>
           <li><a routerLink="/buyer/wishlist" routerLinkActive="active-section">İstek Listem</a></li>
           <li><a routerLink="/buyer/returns" routerLinkActive="active-section">İade Taleplerim</a></li>
-          </ul>
+        </ul>
       </nav>
     </aside>
 
@@ -19,18 +19,66 @@
       <section class="profile-section" id="profile-info">
         <div class="section-header">
            <h4>Profil Bilgileri</h4>
-           <button class="edit-btn" (click)="editProfileInfo()">Düzenle</button>
+           <button class="edit-btn"
+                   *ngIf="!showProfileEditForm"
+                   (click)="toggleProfileEditForm(true)">Düzenle</button>
+           <button type="button" class="cancel-btn"
+                   *ngIf="showProfileEditForm"
+                   (click)="toggleProfileEditForm(false)"
+                   [disabled]="isSavingProfile">İptal</button>
         </div>
-        <ng-container *ngIf="currentUser$ | async as user; else loadingUser">
-          <div class="user-info">
-            <p><strong>Ad Soyad:</strong> {{ user.firstName }} {{ user.lastName }}</p>
-            <p><strong>E-posta:</strong> {{ user.email }}</p>
-            <p><strong>Kullanıcı Tipi:</strong> {{ user.role }}</p>
-            </div>
-        </ng-container>
-         <ng-template #loadingUser>
-             <app-loading-spinner *ngIf="!(currentUser$ | async)"></app-loading-spinner>
-             </ng-template>
+
+        <div class="user-info" *ngIf="!showProfileEditForm">
+            <ng-container *ngIf="currentUser$ | async as user; else loadingUser">
+                <p><strong>Ad Soyad:</strong> {{ user.firstName }} {{ user.lastName }}</p>
+                <p><strong>E-posta:</strong> {{ user.email }}</p>
+                <p><strong>Kullanıcı Tipi:</strong> {{ user.role }}</p>
+            </ng-container>
+            <ng-template #loadingUser>
+                <app-loading-spinner></app-loading-spinner>
+            </ng-template>
+        </div>
+
+        <div class="profile-edit-form" *ngIf="showProfileEditForm">
+            <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+                <div class="form-group">
+                    <label for="profile-firstName">Ad*</label>
+                    <input type="text" id="profile-firstName" formControlName="firstName"
+                           [ngClass]="{'is-invalid': profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched}">
+                    <div *ngIf="profileForm.get('firstName')?.invalid && profileForm.get('firstName')?.touched" class="invalid-feedback">
+                        <div *ngIf="profileForm.get('firstName')?.errors?.['required']">Ad zorunludur.</div>
+                        <div *ngIf="profileForm.get('firstName')?.errors?.['minlength']">En az 2 karakter olmalıdır.</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="profile-lastName">Soyad*</label>
+                    <input type="text" id="profile-lastName" formControlName="lastName"
+                           [ngClass]="{'is-invalid': profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched}">
+                     <div *ngIf="profileForm.get('lastName')?.invalid && profileForm.get('lastName')?.touched" class="invalid-feedback">
+                        <div *ngIf="profileForm.get('lastName')?.errors?.['required']">Soyad zorunludur.</div>
+                        <div *ngIf="profileForm.get('lastName')?.errors?.['minlength']">En az 2 karakter olmalıdır.</div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="profile-phoneNumber">Telefon Numarası</label>
+                    <input type="tel" id="profile-phoneNumber" formControlName="phoneNumber" placeholder="5xxxxxxxxx">
+                    </div>
+
+                <div *ngIf="profileError" class="error-message">
+                    {{ profileError }}
+                </div>
+                <app-loading-spinner *ngIf="isSavingProfile"></app-loading-spinner>
+
+                <div class="form-actions">
+                    <button type="submit" class="save-btn" [disabled]="profileForm.invalid || isSavingProfile">
+                        {{ isSavingProfile ? 'Kaydediliyor...' : 'Değişiklikleri Kaydet' }}
+                    </button>
+                    </div>
+            </form>
+        </div>
+
       </section>
 
       <section class="profile-section" id="addresses">
@@ -65,12 +113,15 @@
                    <span *ngIf="actionLoading[address.id!] === 'default'">...</span>
                 </button>
               </div>
-            </div></div>
+            </div>
+          </div>
           <ng-template #noAddresses>
             <p *ngIf="!isLoadingAddresses">Kayıtlı adresiniz bulunmamaktadır.</p>
           </ng-template>
         </div>
-        <ng-template #loadingAddr></ng-template> <div class="new-address-toggle">
+        <ng-template #loadingAddr></ng-template>
+
+        <div class="new-address-toggle">
             <button type="button" class="add-address-btn" (click)="toggleNewAddressForm()" *ngIf="!showNewAddressForm">
                 <i class="icon-plus">➕</i> Yeni Adres Ekle
             </button>
@@ -79,70 +130,76 @@
         <div *ngIf="showNewAddressForm" class="new-address-form-container">
             <h5>{{ editingAddressId ? 'Adresi Düzenle' : 'Yeni Adres Ekle' }}</h5>
              <form [formGroup]="newAddressForm" (ngSubmit)="saveOrUpdateAddress()">
-                <div class="form-group">
-                    <label for="na-title">Adres Başlığı*</label>
-                    <input type="text" id="na-title" formControlName="addressTitle" placeholder="Ev Adresim, İş Adresim vb."
-                           [ngClass]="{'is-invalid': newAddressForm.get('addressTitle')?.invalid && (newAddressForm.get('addressTitle')?.dirty || newAddressForm.get('addressTitle')?.touched)}">
-                    <div *ngIf="newAddressForm.get('addressTitle')?.invalid && (newAddressForm.get('addressTitle')?.dirty || newAddressForm.get('addressTitle')?.touched)" class="invalid-feedback">
-                         Adres başlığı zorunludur.
-                     </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="na-title">Adres Başlığı*</label>
+                        <input type="text" id="na-title" formControlName="addressTitle" placeholder="Ev Adresim, İş Adresim vb."
+                               [ngClass]="{'is-invalid': newAddressForm.get('addressTitle')?.invalid && newAddressForm.get('addressTitle')?.touched}">
+                        <div *ngIf="newAddressForm.get('addressTitle')?.invalid && newAddressForm.get('addressTitle')?.touched" class="invalid-feedback">
+                             Adres başlığı zorunludur.
+                        </div>
+                    </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label for="na-fname">Ad*</label>
                         <input type="text" id="na-fname" formControlName="firstName"
-                               [ngClass]="{'is-invalid': newAddressForm.get('firstName')?.invalid && (newAddressForm.get('firstName')?.dirty || newAddressForm.get('firstName')?.touched)}">
-                         <div *ngIf="newAddressForm.get('firstName')?.invalid && (newAddressForm.get('firstName')?.dirty || newAddressForm.get('firstName')?.touched)" class="invalid-feedback">
+                               [ngClass]="{'is-invalid': newAddressForm.get('firstName')?.invalid && newAddressForm.get('firstName')?.touched}">
+                         <div *ngIf="newAddressForm.get('firstName')?.invalid && newAddressForm.get('firstName')?.touched" class="invalid-feedback">
                              Ad zorunludur.
                          </div>
                     </div>
                     <div class="form-group">
                         <label for="na-lname">Soyad*</label>
                         <input type="text" id="na-lname" formControlName="lastName"
-                               [ngClass]="{'is-invalid': newAddressForm.get('lastName')?.invalid && (newAddressForm.get('lastName')?.dirty || newAddressForm.get('lastName')?.touched)}">
-                         <div *ngIf="newAddressForm.get('lastName')?.invalid && (newAddressForm.get('lastName')?.dirty || newAddressForm.get('lastName')?.touched)" class="invalid-feedback">
+                               [ngClass]="{'is-invalid': newAddressForm.get('lastName')?.invalid && newAddressForm.get('lastName')?.touched}">
+                         <div *ngIf="newAddressForm.get('lastName')?.invalid && newAddressForm.get('lastName')?.touched" class="invalid-feedback">
                              Soyad zorunludur.
                          </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="na-phone">Telefon Numarası*</label>
-                    <input type="tel" id="na-phone" formControlName="phoneNumber" placeholder="5xxxxxxxxx"
-                           [ngClass]="{'is-invalid': newAddressForm.get('phoneNumber')?.invalid && (newAddressForm.get('phoneNumber')?.dirty || newAddressForm.get('phoneNumber')?.touched)}">
-                     <div *ngIf="newAddressForm.get('phoneNumber')?.invalid && (newAddressForm.get('phoneNumber')?.dirty || newAddressForm.get('phoneNumber')?.touched)" class="invalid-feedback">
-                         Telefon numarası zorunludur.
-                     </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="na-phone">Telefon Numarası*</label>
+                        <input type="tel" id="na-phone" formControlName="phoneNumber" placeholder="5xxxxxxxxx"
+                               [ngClass]="{'is-invalid': newAddressForm.get('phoneNumber')?.invalid && newAddressForm.get('phoneNumber')?.touched}">
+                         <div *ngIf="newAddressForm.get('phoneNumber')?.invalid && newAddressForm.get('phoneNumber')?.touched" class="invalid-feedback">
+                             Telefon numarası zorunludur (veya format hatası).
+                         </div>
+                    </div>
                  </div>
-                <div class="form-group">
-                    <label for="na-street">Adres Satırı*</label>
-                    <input type="text" id="na-street" formControlName="street" placeholder="Mahalle, cadde, sokak, bina no, daire no"
-                           [ngClass]="{'is-invalid': newAddressForm.get('street')?.invalid && (newAddressForm.get('street')?.dirty || newAddressForm.get('street')?.touched)}">
-                     <div *ngIf="newAddressForm.get('street')?.invalid && (newAddressForm.get('street')?.dirty || newAddressForm.get('street')?.touched)" class="invalid-feedback">
-                         Adres satırı zorunludur.
-                     </div>
+                <div class="form-row">
+                    <div class="form-group full-width">
+                        <label for="na-street">Adres Satırı*</label>
+                        <input type="text" id="na-street" formControlName="street" placeholder="Mahalle, cadde, sokak, no"
+                               [ngClass]="{'is-invalid': newAddressForm.get('street')?.invalid && newAddressForm.get('street')?.touched}">
+                         <div *ngIf="newAddressForm.get('street')?.invalid && newAddressForm.get('street')?.touched" class="invalid-feedback">
+                             Adres satırı zorunludur.
+                         </div>
+                    </div>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label for="na-zip">Posta Kodu*</label>
                     <input type="text" id="na-zip" formControlName="postalCode"
-                           [ngClass]="{'is-invalid': newAddressForm.get('postalCode')?.invalid && (newAddressForm.get('postalCode')?.dirty || newAddressForm.get('postalCode')?.touched)}">
-                    <div *ngIf="newAddressForm.get('postalCode')?.invalid && (newAddressForm.get('postalCode')?.dirty || newAddressForm.get('postalCode')?.touched)" class="invalid-feedback">
+                           [ngClass]="{'is-invalid': newAddressForm.get('postalCode')?.invalid && newAddressForm.get('postalCode')?.touched}">
+                    <div *ngIf="newAddressForm.get('postalCode')?.invalid && newAddressForm.get('postalCode')?.touched" class="invalid-feedback">
                          Posta kodu zorunludur.
                      </div>
                   </div>
                   <div class="form-group">
                     <label for="na-city">Şehir*</label>
                     <input type="text" id="na-city" formControlName="city"
-                           [ngClass]="{'is-invalid': newAddressForm.get('city')?.invalid && (newAddressForm.get('city')?.dirty || newAddressForm.get('city')?.touched)}">
-                    <div *ngIf="newAddressForm.get('city')?.invalid && (newAddressForm.get('city')?.dirty || newAddressForm.get('city')?.touched)" class="invalid-feedback">
+                           [ngClass]="{'is-invalid': newAddressForm.get('city')?.invalid && newAddressForm.get('city')?.touched}">
+                    <div *ngIf="newAddressForm.get('city')?.invalid && newAddressForm.get('city')?.touched" class="invalid-feedback">
                          Şehir zorunludur.
                      </div>
                   </div>
                   <div class="form-group">
                     <label for="na-country">Ülke*</label>
                     <input type="text" id="na-country" formControlName="country"
-                           [ngClass]="{'is-invalid': newAddressForm.get('country')?.invalid && (newAddressForm.get('country')?.dirty || newAddressForm.get('country')?.touched)}">
-                    <div *ngIf="newAddressForm.get('country')?.invalid && (newAddressForm.get('country')?.dirty || newAddressForm.get('country')?.touched)" class="invalid-feedback">
+                           [ngClass]="{'is-invalid': newAddressForm.get('country')?.invalid && newAddressForm.get('country')?.touched}">
+                    <div *ngIf="newAddressForm.get('country')?.invalid && newAddressForm.get('country')?.touched" class="invalid-feedback">
                          Ülke zorunludur.
                      </div>
                   </div>
@@ -162,8 +219,10 @@
                      </button>
                  </div>
             </form>
-        </div> </section>
-        <section class="profile-section" id="security">
+        </div>
+      </section>
+
+      <section class="profile-section" id="security">
           <div class="section-header">
               <h4>Güvenlik</h4>
           </div>
@@ -171,4 +230,7 @@
               Şifre Değiştir
           </button>
        </section>
-    </main> </div> </div>
+
+    </main>
+  </div>
+</div>

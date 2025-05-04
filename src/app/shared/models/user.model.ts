@@ -61,6 +61,8 @@ export interface Profile {
   // Adresler ayrı bir interface (Address) olarak tanımlanıp burada dizi olarak tutulabilir.
   addresses?: Address[]; // Aşağıda tanımlayacağımız Address interface'i
   // Diğer profil alanları...
+  dateOfBirth?: string | Date;
+  sex?: string;
 }
 
 // Backend'deki DtoAddress'e karşılık gelir.

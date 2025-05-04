@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { AuthService } from '../../../core/services/auth.service';
+import { Observable, of, Subscription } from 'rxjs';
 import { UserService } from '../../../core/services/user.service';
-import { UserSummary, Address } from '../../../shared/models/user.model';
+import { UserSummary, Address, Profile } from '../../../shared/models/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '../../../core/services/notification.service'; // <-- NotificationService import et
-import { finalize } from 'rxjs/operators'; // finalize operatörünü import et
+import { finalize, take } from 'rxjs/operators'; // finalize operatörünü import et
 import { Router } from '@angular/router';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-user-profile',
@@ -17,7 +17,13 @@ import { Router } from '@angular/router';
 export class UserProfileComponent implements OnInit {
 
   currentUser$: Observable<UserSummary | null>;
+  currentUserSubscription: Subscription | null = null; // Mevcut kullanıcıyı almak için
   addresses$: Observable<Address[]> = of([]);
+
+  showProfileEditForm = false;
+  profileForm!: FormGroup;
+  isSavingProfile = false;
+  profileError: string | null = null;
 
   // Adres Yönetimi
   showNewAddressForm = false;
@@ -44,7 +50,21 @@ export class UserProfileComponent implements OnInit {
   ngOnInit(): void {
     this.loadAddresses();
     this.initializeNewAddressForm();
+    this.initializeProfileForm();
   }
+
+  initializeProfileForm(profileData: Partial<Profile> = {}): void {
+    // Backend DtoProfile'daki alanlarla eşleşenleri form'a ekle
+    // email ve username genellikle güncellenmez.
+    this.profileForm = this.fb.group({
+        firstName: [profileData.firstName || '', [Validators.required, Validators.minLength(2)]],
+        lastName: [profileData.lastName || '', [Validators.required, Validators.minLength(2)]],
+        phoneNumber: [profileData.phoneNumber || ''], // Zorunlu olmayabilir, backend'e bağlı
+        // dateOfBirth ve sex alanları backend DTO/Entity'sinde varsa eklenebilir
+        // dateOfBirth: [profileData.dateOfBirth || null], // Format?
+        // sex: [profileData.sex || null]
+    });
+}
 
   // Mevcut Adresleri Yükle (Aynı kalabilir)
   loadAddresses(): void {
@@ -89,6 +109,37 @@ export class UserProfileComponent implements OnInit {
         this.addressError = null; // Hataları temizle
     }
   }
+
+
+  toggleProfileEditForm(open: boolean = !this.showProfileEditForm): void {
+    this.showProfileEditForm = open;
+    this.profileError = null; // Hataları temizle
+
+    if (this.showProfileEditForm) {
+        // Formu açarken mevcut kullanıcı verisiyle doldur
+        this.currentUserSubscription = this.currentUser$.pipe(take(1)).subscribe(user => {
+            if (user) {
+                // Profile modeline uygun veriyi hazırla
+                const currentProfileData: Partial<Profile> = {
+                    firstName: user.firstName,
+                    lastName: user.lastName,
+                    // phoneNumber: user.phoneNumber // UserSummary'de yok, Profile'dan alınmalı
+                    // dateOfBirth: user.dateOfBirth
+                    // sex: user.sex
+                };
+                // UserService'ten tam profili çekmek daha doğru olabilir
+                // this.userService.getUserProfileById(user.id).subscribe(profile => { ... });
+                this.initializeProfileForm(currentProfileData); // Formu doldur
+            }
+        });
+    } else {
+        // Formu kapatırken temizle (opsiyonel)
+        this.profileForm.reset();
+        if (this.currentUserSubscription) {
+            this.currentUserSubscription.unsubscribe(); // Abonelikten çık
+        }
+    }
+}
 
   // --- Adresi Düzenle MODU ---
   editAddress(address: Address): void {
@@ -223,14 +274,58 @@ error: (err) => {
    }
 
 
-     // === YENİ: Profil Düzenleme Placeholder ===
-  editProfileInfo(): void {
-    console.log("Profil düzenleme modal/form açılacak.");
-    alert("Profil düzenleme işlevi henüz eklenmedi.");
-    // TODO: Modal aç veya alanları düzenlenebilir yap
-    // Örnek: this.openEditProfileModal();
+
+     editProfileInfo(): void {
+      console.log("Profil düzenleme formu açılıyor.");
+      this.toggleProfileEditForm(true); // Formu göster
+      // Sayfayı formun olduğu yere scroll ettirebiliriz (opsiyonel)
+      // window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+
+saveProfile(): void {
+  this.profileForm.markAllAsTouched();
+  if (this.profileForm.invalid || this.isSavingProfile) {
+      return;
+  }
+
+  this.isSavingProfile = true;
+  this.profileError = null;
+
+  const userId = this.authService.currentUserValue?.id;
+  if (!userId) {
+      this.profileError = "Kullanıcı ID bulunamadı.";
+      this.isSavingProfile = false;
+      return;
+  }
+
+  const formValue = this.profileForm.value;
+  // Profile modeline uygun payload oluştur
+  const profilePayload: Partial<Profile> = {
+      firstName: formValue.firstName,
+      lastName: formValue.lastName,
+      phoneNumber: formValue.phoneNumber || undefined // Boşsa undefined gönder
+      // dateOfBirth: formValue.dateOfBirth,
+      // sex: formValue.sex
+  };
+
+  this.userService.updateUserProfile(userId, profilePayload).pipe(
+      finalize(() => this.isSavingProfile = false)
+  ).subscribe({
+      next: (updatedProfile) => {
+          this.notificationService.showSuccess('Profil bilgileri başarıyla güncellendi!');
+          this.toggleProfileEditForm(false); // Formu kapat
+          // ÖNEMLİ: Auth Service'teki currentUser'ı güncellememiz gerekiyor!
+          // Yoksa header vb. eski bilgiyi gösterir.
+          this.authService.refreshCurrentUserState(updatedProfile); // AuthService'e böyle bir metot ekle
+          // this.currentUser$ observable'ı otomatik güncellenecektir.
+      },
+      error: (err) => {
+          console.error("Error updating profile:", err);
+          this.profileError = err.message || 'Profil güncellenirken bir hata oluştu.';
+      }
+  });
 }
-// === ===
 
 
 } // UserProfileComponent sınıfının sonu

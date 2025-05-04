@@ -6,7 +6,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
-import { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse, UserSummary } from '../../shared/models/user.model';
+import { LoginRequest, LoginResponse, Profile, RegisterRequest, RegisterResponse, UserSummary } from '../../shared/models/user.model';
 import { environment } from '../../../environments/environment'; // <-- environment import edin
 
 @Injectable({
@@ -94,6 +94,27 @@ export class AuthService {
       return null;
     }
   }
+
+  refreshCurrentUserState(updatedUserData: Partial<UserSummary | Profile>): void {
+    const currentUser = this.currentUserValue;
+    const currentToken = this.getToken(); // Mevcut token'ı al
+
+    if (currentUser && updatedUserData && currentToken) {
+        // Mevcut state üzerine yeni veriyi yaz (UserSummary alanlarını güncelle)
+        const updatedSummary: UserSummary = {
+            ...currentUser, // Mevcut ID, username, email, role, status korunur
+            firstName: updatedUserData.firstName ?? currentUser.firstName, // Null check
+            lastName: updatedUserData.lastName ?? currentUser.lastName, // Null check
+            // Gerekirse diğer UserSummary alanlarını da güncelle
+        };
+        // State'i yeni özet ve MEVCUT token ile güncelle
+        this.setAuthState(currentToken, updatedSummary);
+        console.log("AuthService state refreshed with updated user info.");
+    } else {
+        console.warn("Could not refresh user state: Current user, updated data, or token missing.");
+    }
+}
+
 
   private hasToken(): boolean {
     if (isPlatformBrowser(this.platformId)) {
