@@ -1,5 +1,4 @@
 // src/app/core/services/auth.service.ts
-
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -7,15 +6,19 @@ import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
 import { LoginRequest, LoginResponse, Profile, RegisterRequest, RegisterResponse, UserSummary } from '../../shared/models/user.model';
-import { environment } from '../../../environments/environment'; // <-- environment import edin
+import { environment } from '../../../environments/environment';
+
+// Gerekirse Buffer importu (SSR için)
+// Node.js ortamında Buffer'ı kullanmak için 'buffer' paketini yüklemeniz gerekebilir: npm install buffer
+// import { Buffer } from 'buffer'; // Eğer 'buffer' paketi yüklüyse veya Node.js ortamıysa
+declare var Buffer: any; // Buffer tipini global olarak tanıtıyoruz (tarayıcıda olmayabilir)
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
 
-  // --- Backend API URL'si ---
-  private readonly AUTH_API_URL = `${environment.apiUrl}/rest/api/registration`; // <-- environment kullanın
+  private readonly AUTH_API_URL = `${environment.apiUrl}/rest/api/registration`; // Environment'tan API URL'si
 
   private currentUserSubject = new BehaviorSubject<UserSummary | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
@@ -23,23 +26,7 @@ export class AuthService {
   private loggedInSubject = new BehaviorSubject<boolean>(false);
   public isLoggedIn$ = this.loggedInSubject.asObservable();
 
-
-    // === Mock Kullanıcı Bilgileri ===
-    private mockUsers: { [key: string]: { user: UserSummary, fakeTokenPayload: any } } = {
-      'admin@test.com': {
-        user: { id: 1, username: 'admin@test.com', firstName: 'Admin', lastName: 'User', email: 'admin@test.com', role: 'ADMIN', status: 'Active' },
-        fakeTokenPayload: { userId: 1, sub: 'admin@test.com', firstName: 'Admin', lastName: 'User', email: 'admin@test.com', role: 'ADMIN', status: 'Active' } // decodeToken'ın beklediği alanlar
-      },
-      'seller@test.com': {
-        user: { id: 2, username: 'seller@test.com', firstName: 'Seller', lastName: 'User', email: 'seller@test.com', role: 'SELLER', status: 'Active' },
-        fakeTokenPayload: { userId: 2, sub: 'seller@test.com', firstName: 'Seller', lastName: 'User', email: 'seller@test.com', role: 'SELLER', status: 'Active' }
-      },
-      'buyer@test.com': {
-        user: { id: 3, username: 'buyer@test.com', firstName: 'Buyer', lastName: 'User', email: 'buyer@test.com', role: 'CUSTOMER', status: 'Active' },
-        fakeTokenPayload: { userId: 3, sub: 'buyer@test.com', firstName: 'Buyer', lastName: 'User', email: 'buyer@test.com', role: 'CUSTOMER', status: 'Active' }
-      }
-      // İhtiyaç duydukça başka mock kullanıcılar eklenebilir
-    };
+  // mockUsers propertysi kaldırıldı.
 
   constructor(
     private http: HttpClient,
@@ -49,119 +36,109 @@ export class AuthService {
     this.initializeAuthState();
   }
 
-  // --- initializeAuthState, setAuthState, getUserFromStorage, hasToken, getToken metotları aynı kalabilir ---
+  // --- Servis Başlatıldığında Yetkilendirme Durumunu Yükle ---
   private initializeAuthState(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.currentUserSubject.next(this.getUserFromStorage());
-      this.loggedInSubject.next(this.hasToken());
+      const token = this.getToken();
+      if (token) {
+        const user = this.decodeToken(token);
+        this.setAuthState(token, user); // Token varsa state'i başlat
+      } else {
+         this.setAuthState(null, null); // Token yoksa null ata
+      }
       console.log('AuthService initialized on Browser. Initial loggedIn state:', this.loggedInSubject.value);
     } else {
        console.log('AuthService initialized on Server. State remains default.');
+       this.setAuthState(null, null); // Sunucuda da başlangıç state'i null olsun
     }
   }
 
-  private setAuthState(token: string | null, user: UserSummary | null): void {
-    if (isPlatformBrowser(this.platformId)) {
-      if (user && token) {
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('currentUser', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('currentUser');
-      }
+  // --- JWT Token'ı Çözümle ve Kullanıcı Bilgisini Çıkar (Rol Kontrollü) ---
+  private decodeToken(token: string): UserSummary | null {
+    if (!token) {
+        console.error("decodeToken called with null or empty token.");
+        return null;
     }
-    this.currentUserSubject.next(user);
-    this.loggedInSubject.next(!!token);
-    // Kullanıcı değiştiğinde loglama (debugging için)
-    console.log("Current User State Updated:", this.currentUserSubject.value);
-    console.log("Logged In State Updated:", this.loggedInSubject.value);
-  }
-
-  private getUserFromStorage(): UserSummary | null {
-    if (isPlatformBrowser(this.platformId)) {
-      const userJson = localStorage.getItem('currentUser');
-      if (userJson) {
-        try {
-          return JSON.parse(userJson);
-        } catch (e) {
-          console.error('Error parsing user from storage', e);
-          localStorage.removeItem('currentUser');
-          return null;
+    try {
+        const payloadBase64 = token.split('.')[1];
+        if (!payloadBase64) {
+            console.error('Invalid token structure: Missing payload.');
+            return null;
         }
-      }
-      return null;
-    } else {
-      return null;
-    }
-  }
 
-  refreshCurrentUserState(updatedUserData: Partial<UserSummary | Profile>): void {
-    const currentUser = this.currentUserValue;
-    const currentToken = this.getToken(); // Mevcut token'ı al
+        let payloadJson: string;
+        // Base64 decode: Tarayıcıda atob, sunucuda Buffer kullan
+        if (isPlatformBrowser(this.platformId)) {
+            payloadJson = atob(payloadBase64);
+        } else {
+             if (typeof Buffer === 'undefined') {
+                 console.error('Buffer is not defined on the server. Cannot decode token.');
+                 return null;
+             }
+            payloadJson = Buffer.from(payloadBase64, 'base64').toString('utf8');
+        }
 
-    if (currentUser && updatedUserData && currentToken) {
-        // Mevcut state üzerine yeni veriyi yaz (UserSummary alanlarını güncelle)
-        const updatedSummary: UserSummary = {
-            ...currentUser, // Mevcut ID, username, email, role, status korunur
-            firstName: updatedUserData.firstName ?? currentUser.firstName, // Null check
-            lastName: updatedUserData.lastName ?? currentUser.lastName, // Null check
-            // Gerekirse diğer UserSummary alanlarını da güncelle
+        const payload = JSON.parse(payloadJson);
+        console.log("Decoded JWT Payload:", payload);
+
+        // Rolü Çıkarma Mantığı
+        let determinedRole: string | null = null;
+
+        // 1. 'authorities' claim'ini kontrol et
+        if (payload.authorities && Array.isArray(payload.authorities) && payload.authorities.length > 0) {
+            if (payload.authorities.includes('ROLE_ADMIN')) { determinedRole = 'ADMIN'; }
+            else if (payload.authorities.includes('ROLE_SELLER')) { determinedRole = 'SELLER'; }
+            else if (payload.authorities.includes('ROLE_CUSTOMER')) { determinedRole = 'CUSTOMER'; }
+        }
+        // 2. 'authorities' yoksa 'role' claim'ini kontrol et
+        else if (payload.role && typeof payload.role === 'string') {
+             const roleFromClaim = payload.role.replace('ROLE_', '').toUpperCase();
+             const knownRoles = ['ADMIN', 'SELLER', 'CUSTOMER'];
+             if (knownRoles.includes(roleFromClaim)) { determinedRole = roleFromClaim; }
+             else { console.warn(`Unknown role value found in 'role' claim: ${payload.role}`); }
+        }
+
+        // 3. Rol belirlenemezse null dön
+        if (!determinedRole) {
+             console.error("Could not determine user role from JWT payload claims.");
+             return null;
+        }
+
+        const user: UserSummary = {
+            id: payload.userId || payload.sub,
+            username: payload.username || payload.sub || payload.email,
+            firstName: payload.firstName || '',
+            lastName: payload.lastName || '',
+            email: payload.email || '',
+            role: determinedRole as any,
+            status: payload.status || 'Active'
         };
-        // State'i yeni özet ve MEVCUT token ile güncelle
-        this.setAuthState(currentToken, updatedSummary);
-        console.log("AuthService state refreshed with updated user info.");
-    } else {
-        console.warn("Could not refresh user state: Current user, updated data, or token missing.");
-    }
-}
 
+        if (!user.id) {
+            console.error('Decoded token is missing required claim: userId or sub.');
+            return null;
+        }
 
-  private hasToken(): boolean {
-    if (isPlatformBrowser(this.platformId)) {
-      return !!localStorage.getItem('authToken');
-    } else {
-      return false;
-    }
-  }
+        console.log("Decoded User Summary:", user);
+        return user;
 
-  getToken(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('authToken');
-    } else {
-      return null;
+    } catch (e) {
+        console.error('Error decoding token:', e);
+         if (!isPlatformBrowser(this.platformId) && typeof Buffer === 'undefined') {
+           console.warn('Buffer is not defined. Base64 decoding might fail on the server.');
+        }
+        return null;
     }
   }
-  // -----------------------------------------------------------------------------------------------
 
-  /**
-   * Login isteği yapar ve başarılı olursa state'i günceller.
-   */
+
+  // --- Kullanıcı Giriş İşlemi (Sadece Gerçek API Çağrısı) ---
   login(loginRequest: LoginRequest): Observable<LoginResponse> {
-    const loginUrl = `${this.AUTH_API_URL}/login`;
-    const username = loginRequest.username.toLowerCase(); // Küçük harfe çevirerek kontrol et
+    const loginUrl = `${this.AUTH_API_URL}/login`; // Backend login endpoint'i
+    console.log(`Attempting login to: ${loginUrl} for user: ${loginRequest.username}`);
 
-    // Mock kullanıcı kontrolü
-    if (this.mockUsers[username]) {
-      console.warn(`Performing MOCK login for user: ${username}`);
-      const mockData = this.mockUsers[username];
-
-      // Sahte token oluştur (basit base64 encode edilmiş payload)
-      // Header ve signature kısmı olmadan sadece payload'ı kodluyoruz.
-      const fakeTokenPayloadString = JSON.stringify(mockData.fakeTokenPayload);
-      const fakeToken = `fakeHeader.${btoa(fakeTokenPayloadString)}.fakeSignature`; // Basit base64 encode
-
-      this.setAuthState(fakeToken, mockData.user); // Auth state'i ayarla
-
-      // Mock LoginResponse döndür
-      const mockResponse: LoginResponse = { token: fakeToken };
-      return of(mockResponse).pipe(
-        tap(() => console.log(`Mock login successful for ${username}`))
-      ); // Observable<LoginResponse> döndür
-    }
-
-    // Mock kullanıcı değilse, normal API çağrısı yap
-    console.log(`Attempting REAL login to: ${loginUrl} for user: ${loginRequest.username}`);
-    return this.http.post(loginUrl, loginRequest, { responseType: 'text' })
+    // Doğrudan API çağrısı yap
+    return this.http.post(loginUrl, loginRequest, { responseType: 'text' }) // Token'ı text olarak al
       .pipe(
         map(tokenString => {
            console.log("Raw token string received:", tokenString);
@@ -172,15 +149,14 @@ export class AuthService {
           return response;
         }),
         tap(response => {
-          if (response && response.token) {
+          if (response?.token) { // Null veya undefined kontrolü
               const user = this.decodeToken(response.token);
                if (!user) {
-                   console.error("Failed to decode token or extract user information.");
+                   console.error("Failed to decode token or extract required user information (ID or Role).");
                    this.setAuthState(null, null);
-                   throw new Error('Login failed: Could not decode token or extract user info.');
+                   throw new Error('Login failed: Could not process token properly.');
                }
-               console.log("Decoded user from token:", user);
-              this.setAuthState(response.token, user);
+              this.setAuthState(response.token, user); // Auth state'i güncelle
               console.log('Login successful, auth state updated.');
           } else {
               this.setAuthState(null, null);
@@ -188,166 +164,140 @@ export class AuthService {
               throw new Error('Login response did not contain a token.');
           }
         }),
-        catchError(this.handleError)
+        catchError(this.handleError) // Merkezi hata işleyici
       );
   }
 
-  /**
-   * Logout işlemi yapar ve state'i temizler.
-   */
-  logout(): void {
-     this.setAuthState(null, null);
-     console.log('Logged out.');
-     if (isPlatformBrowser(this.platformId)) {
-       this.router.navigate(['/auth/login']); // Login sayfasına yönlendir
-     }
-  }
-
-  /**
-   * Register isteği yapar.
-   */
-  register(payload: RegisterRequest): Observable<RegisterResponse> {
-      const registerUrl = `${this.AUTH_API_URL}/customer`; // customer register endpoint'i
-      // Backend Customer entity'si beklediği için ona uygun bir yapı gönderiyoruz
-      const backendPayload = {
+  // --- Kullanıcı Kayıt İşlemi ---
+  register(payload: RegisterRequest, role: string): Observable<RegisterResponse> {
+      let registerUrl: string;
+      let backendPayload: any = {
           firstName: payload.firstName,
           lastName: payload.lastName,
           email: payload.email,
           username: payload.username,
           password: payload.password,
-          role: 'CUSTOMER' // Rolü frontend'den belirliyoruz
+          role: role.toUpperCase()
       };
 
-      console.log(`Sending registration request to: ${registerUrl}`);
-      // Backend Customer entity'si döndüğü için <any> kullanabiliriz
+      switch (role.toUpperCase()) {
+          case 'SELLER': registerUrl = `${this.AUTH_API_URL}/seller`; break;
+          case 'ADMIN': registerUrl = `${this.AUTH_API_URL}/admin`; break;
+          case 'LOGISTICSPROVIDER': registerUrl = `${this.AUTH_API_URL}/logisticsProvider`; break;
+          case 'CUSTOMER': default: registerUrl = `${this.AUTH_API_URL}/customer`; break;
+      }
+
+      console.log(`Sending ${role} registration request to: ${registerUrl}`);
       return this.http.post<any>(registerUrl, backendPayload).pipe(
           map(backendResponse => {
               console.log("Registration response from server:", backendResponse);
-              // Yanıtı RegisterResponse modeline map et
-              const response: RegisterResponse = {
-                  success: true, // 2xx yanıt geldiyse başarılı varsayalım
+              return {
+                  success: true,
                   message: 'Kayıt başarılı! Lütfen giriş yapın.',
-                  userId: backendResponse?.userId // Yanıtta userId varsa al
+                  userId: backendResponse?.userId || backendResponse?.id
               };
-              return response;
           }),
-          catchError(this.handleError) // Merkezi hata yönetimi
+          catchError(this.handleError)
       );
   }
 
-  /**
-   * JWT'yi decode edip UserSummary nesnesine dönüştürür.
-   * DİKKAT: Backend'in JWT içine gerekli bilgileri (id, firstName, lastName, email, role) eklediğinden emin olun!
-   */
-  // === decodeToken Metodu (Sahte token'ı da çözebilecek şekilde güncellendi) ===
-  private decodeToken(token: string): UserSummary | null {
-    if (!token) {
-        return null;
-    }
-    try {
-        const payloadBase64 = token.split('.')[1]; // Payload kısmı (header ve signature'ı önemsemiyoruz)
-        if (!payloadBase64) {
-            console.error('Invalid token structure: Missing payload.');
-            return null;
-        }
-        const payloadJson = atob(payloadBase64); // Base64 çöz
-        const payload = JSON.parse(payloadJson);
+  // --- Çıkış İşlemi ---
+  logout(): void {
+      this.setAuthState(null, null);
+      console.log('Logged out.');
+      if (isPlatformBrowser(this.platformId)) {
+        this.router.navigate(['/auth/login']);
+      }
+   }
 
-         console.log("Decoded JWT Payload:", payload);
+  // --- Yardımcı Metotlar ---
 
-        // UserSummary'yi oluştur (Mock payload veya gerçek JWT payload'dan)
-        const user: UserSummary = {
-            id: payload.userId || payload.sub, // 'sub' genellikle ID'dir
-            username: payload.username || payload.sub || payload.email, // username, sub veya email kullan
-            firstName: payload.firstName || '',
-            lastName: payload.lastName || '',
-            email: payload.email || '',
-            role: (payload.role || 'CUSTOMER').replace('ROLE_', ''), // Rolü al ve prefix'i temizle
-            status: payload.status || 'Active' // Durumu al veya varsayılan ata
-        };
-
-        // Gerekli alanlar var mı kontrolü
-        if (!user.id || !user.role) {
-            console.error('Decoded token is missing required claims (userId/sub or role).');
-            return null;
-        }
-
-        return user;
-    } catch (e) {
-        console.error('Error decoding token:', e);
-        if (!isPlatformBrowser(this.platformId)) {
-           console.warn('atob function might not be available on the server.');
-        }
-        return null;
-    }
-  }
-
-  /**
-   * Anlık kullanıcı bilgisini döndürür.
-   */
+  // Anlık kullanıcı bilgisi
   public get currentUserValue(): UserSummary | null {
     return this.currentUserSubject.value;
   }
 
+  // Local Storage'dan token al
+  getToken(): string | null {
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('authToken');
+    }
+    return null;
+  }
 
-  /**
-   * Merkezi Hata Yönetimi Metodu
-   */
+  // Yetkilendirme durumunu ayarla ve storage'ı güncelle
+  private setAuthState(token: string | null, user: UserSummary | null): void {
+    if (isPlatformBrowser(this.platformId)) {
+      if (user && token) {
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('currentUser');
+      }
+    }
+    // BehaviorSubject'leri sadece değişiklik varsa güncelle
+    if (this.currentUserSubject.value !== user) {
+      this.currentUserSubject.next(user);
+    }
+    if (this.loggedInSubject.value !== !!token) {
+      this.loggedInSubject.next(!!token);
+    }
+    console.log("Auth State Updated - Current User:", this.currentUserSubject.value);
+    console.log("Auth State Updated - Logged In:", this.loggedInSubject.value);
+  }
+
+  // Profil güncellendiğinde state'i yenile
+  refreshCurrentUserState(updatedUserData: Partial<UserSummary | Profile>): void {
+    const currentUser = this.currentUserValue;
+    const currentToken = this.getToken();
+
+    if (currentUser && updatedUserData && currentToken) {
+        const updatedSummary: UserSummary = {
+            ...currentUser,
+            firstName: updatedUserData.firstName ?? currentUser.firstName,
+            lastName: updatedUserData.lastName ?? currentUser.lastName,
+        };
+        this.setAuthState(currentToken, updatedSummary);
+        console.log("AuthService state refreshed with updated user info.");
+    } else {
+        console.warn("Could not refresh user state: Missing data.");
+    }
+  }
+
+  // --- Merkezi Hata İşleyici ---
   private handleError(error: HttpErrorResponse): Observable<never> {
-    let userMessage = 'Bilinmeyen bir hata oluştu!'; // Varsayılan mesaj
+    let userMessage = 'Bilinmeyen bir kimlik doğrulama hatası oluştu!';
 
     if (error.status === 0 || !error.error) {
-        // Ağ hatası veya istemci tarafı hata
-        console.error('Ağ/İstemci hatası:', error.message || error);
-        userMessage = 'Bağlantı hatası veya istemci tarafında bir sorun oluştu. Lütfen bağlantınızı kontrol edin veya daha sonra tekrar deneyin.';
+        console.error('Ağ/İstemci hatası (AuthService):', error.message || error);
+        userMessage = 'Bağlantı hatası veya istemci tarafında bir sorun oluştu.';
     } else {
-        // Backend hatası (4xx veya 5xx)
-        console.error(`Backend Hata Kodu ${error.status}, Gövde:`, error.error);
-
-        // Backend'den gelen `message` alanını kullanmayı dene (varsa)
-        const backendErrorMessage = error.error?.message || (typeof error.error === 'string' ? error.error : null);
+        console.error(`Backend Hatası ${error.status} (AuthService), Gövde:`, error.error);
+        const backendError = error.error;
+        const backendErrorMessage = backendError?.message || (typeof backendError === 'string' ? backendError : null);
 
         if (backendErrorMessage) {
             userMessage = backendErrorMessage;
+            if (userMessage.toLowerCase().includes('bad credentials')) {
+                 userMessage = 'E-posta veya şifre hatalı.';
+            } else if (userMessage.toLowerCase().includes('user not found')) {
+                 userMessage = 'Bu e-posta ile kayıtlı kullanıcı bulunamadı.';
+            } else if (userMessage.toLowerCase().includes('already exists') || error.status === 409) {
+                 userMessage = 'Bu e-posta adresi veya kullanıcı adı zaten kayıtlı.';
+            }
         } else {
-             // Genel durum kodlarına göre mesaj ata
              switch (error.status) {
-                 case 400: // Bad Request (Geçersiz istek, validasyon hatası vs.)
-                     // Eğer validationErrors varsa daha detaylı mesaj verilebilir
-                     if (error.error?.validationErrors) {
-                         userMessage = 'Lütfen formdaki hataları düzeltin.'; // Genel validasyon mesajı
-                         // İsterseniz ilk hatayı gösterebilirsiniz:
-                         // const firstErrorField = Object.keys(error.error.validationErrors)[0];
-                         // userMessage = error.error.validationErrors[firstErrorField];
-                     } else {
-                          userMessage = 'Geçersiz istek. Lütfen bilgilerinizi kontrol edin.';
-                     }
-                     break;
-                 case 401: // Unauthorized (JWT geçersiz, süresi dolmuş veya yok)
-                     userMessage = 'Oturumunuz zaman aşımına uğradı veya geçersiz. Lütfen tekrar giriş yapın.';
-                     // Otomatik logout ve login'e yönlendirme yapılabilir
-                     // this.logout();
-                     break;
-                 case 403: // Forbidden (Yetki yok)
-                     userMessage = 'Bu işlem için yetkiniz bulunmamaktadır.';
-                     break;
-                 case 404: // Not Found (Endpoint bulunamadı)
-                     userMessage = 'İstenen kaynak sunucuda bulunamadı.';
-                     break;
-                 case 409: // Conflict (Kullanıcı adı/email zaten var vb.)
-                     userMessage = 'İşlem çakışması (Örn: E-posta zaten kayıtlı).';
-                     break;
-                 case 500: // Internal Server Error
-                     userMessage = 'Sunucu tarafında beklenmedik bir hata oluştu.';
-                     break;
-                 default:
-                     userMessage = `Sunucu hatası (${error.status}). Lütfen daha sonra tekrar deneyin.`;
+                 case 400: userMessage = 'Geçersiz istek.'; break;
+                 case 401: userMessage = 'E-posta veya şifre hatalı.'; break;
+                 case 403: userMessage = 'Yetkiniz yok.'; break;
+                 case 404: userMessage = 'API bulunamadı.'; break;
+                 case 409: userMessage = 'Kullanıcı adı/e-posta zaten mevcut.'; break;
+                 case 500: userMessage = 'Sunucu hatası.'; break;
+                 default: userMessage = `Sunucu hatası (${error.status}).`;
              }
         }
     }
-
-    // Kullanıcıya yönelik hatayı içeren bir observable fırlat.
-    // Component'ler bu hatayı yakalayıp kendi errorMessage'larına atayabilir.
     return throwError(() => new Error(userMessage));
   }
 

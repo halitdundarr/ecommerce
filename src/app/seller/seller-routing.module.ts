@@ -5,11 +5,6 @@ import { SellerProductListComponent } from './components/seller-product-list/sel
 import { ProductFormComponent } from '../admin/components/product-form/product-form.component';
 import { SellerOrderListComponent } from './components/seller-order-list/seller-order-list.component';
 import { SellerSettingsComponent } from './components/seller-settings/seller-settings.component';
-// İleride oluşturulacak componentler:
-// import { SellerDashboardComponent } from './components/seller-dashboard/seller-dashboard.component';
-// import { SellerProductListComponent } from './components/seller-product-list/seller-product-list.component';
-// import { SellerOrderListComponent } from './components/seller-order-list/seller-order-list.component';
-// import { SellerSettingsComponent } from './components/seller-settings/seller-settings.component';
 
 
 const routes: Routes = [
