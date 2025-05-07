@@ -46,29 +46,27 @@ export class ProductService {
   private readonly PRODUCT_API_URL = `${this.API_BASE_URL}/api/v1/products`;
   private readonly ADMIN_API_URL = `${this.API_BASE_URL}/api/v1/admin`;
   private readonly SELLER_API_URL = `${this.API_BASE_URL}/api/v1/seller`;
-  private readonly CATEGORY_API_URL = `${this.API_BASE_URL}/api/v1/categories`;
+  private readonly CATEGORY_API_URL = `${this.API_BASE_URL}/api/v1/products/categories`;
 
-  private mockCategories: Category[] = [
-    { id: 1, name: 'Elektronik' }, { id: 2, name: 'Moda' }, { id: 3, name: 'Ev & Yaşam' }, { id: 4, name: 'Kitap & Hobi' }, { id: 5, name: 'Süpermarket' }
-  ];
 
   constructor(
     private http: HttpClient,
     private authService: AuthService
   ) { }
 
-  // --- getCategories, getProducts, getProductById, searchProducts metotları öncekiyle aynı ---
+
   getCategories(): Observable<Category[]> {
-     const url = this.CATEGORY_API_URL;
-     console.log(`Workspaceing categories from: ${url}`);
-     return this.http.get<BackendDtoCategory[]>(url).pipe(
-         map(dtos => dtos.map(dto => this.mapDtoCategoryToCategory(dto))),
-         catchError(err => {
-              console.error("Error loading categories from backend, using mock data as fallback.", err);
-              return of(this.mockCategories).pipe(delay(100));
-         })
-     );
-  }
+    const url = this.CATEGORY_API_URL;
+    console.log(`Workspaceing categories from: ${url}`);
+    return this.http.get<BackendDtoCategory[]>(url).pipe(
+        map(dtos => dtos.map(dto => this.mapDtoCategoryToCategory(dto))),
+        catchError(err => {
+            console.error("Error loading categories from backend:", err);
+            // Hata mesajını içeren bir Error nesnesi fırlat
+            return throwError(() => new Error('Kategoriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'));
+        })
+    );
+}
 
   getProducts(limit: number = 20, offset: number = 0, filters: ProductFilters = {}): Observable<ProductSummary[]> {
     const page = Math.floor(offset / limit);
@@ -130,7 +128,6 @@ export class ProductService {
         );
   }
 
-  // ***** DÜZELTME: Dönüş tipi ProductSummary[] oldu *****
   getProductsByCurrentSeller(): Observable<ProductSummary[]> {
       const currentUser = this.authService.currentUserValue;
       if (!currentUser?.id) {
@@ -147,7 +144,7 @@ export class ProductService {
           catchError(this.handleError)
       );
   }
-  // ***** BİTİŞ: DÜZELTME *****
+
 
 
   // --- addProduct, updateProduct, deleteProduct metotları (model güncellendiği için artık sorunsuz olmalı) ---
