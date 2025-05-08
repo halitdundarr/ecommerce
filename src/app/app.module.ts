@@ -2,6 +2,7 @@ import { NgModule } from '@angular/core';
 import { BrowserModule, provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; // <-- Animasyon modülünü import et
 import { ToastrModule } from 'ngx-toastr'; // <-- Toastr modülünü import et
+import { NgxStripeModule } from 'ngx-stripe';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -36,7 +37,8 @@ import { HttpClientModule } from '@angular/common/http';
     BuyerModule,
     FeaturesModule,
     CoreModule,
-    HttpClientModule
+    HttpClientModule,
+    NgxStripeModule.forRoot('pk_test_YOUR_STRIPE_PUBLISHABLE_KEY') // Stripe Publishable Key'inizi buraya yazın
 ],
   providers: [
     provideClientHydration(withEventReplay())
