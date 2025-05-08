@@ -95,7 +95,7 @@ export class ProductService {
   }
 
   getProductById(productId: number | string): Observable<Product | undefined> {
-    const url = `<span class="math-inline">\{this\.PRODUCT\_API\_URL\}/</span>{productId}`;
+    const url = `${this.PRODUCT_API_URL}/${productId}`;
     console.log(`Workspaceing product detail from: ${url}`);
     return this.http.get<BackendDtoProduct>(url).pipe(
       map(dtoProduct => this.mapDtoProductToProduct(dtoProduct)),
