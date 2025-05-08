@@ -107,7 +107,6 @@
                        </div>
                   </div>
                </div>
-
                <div *ngIf="addressError" class="error-message">
                   {{ addressError }}
                </div>
@@ -122,30 +121,13 @@
                    </button>
                </div>
           </form>
-    </div>
-
-      </div>
-  </section>
-
-  <section class="checkout-section payment-section">
+        </div> </div> </section> <section class="checkout-section payment-section">
       <h3>2. Ödeme Yöntemi</h3>
-       <div class="payment-methods">
-          <div *ngFor="let method of paymentMethods"
+       <div class="payment-methods"> <div *ngFor="let method of paymentMethods"
                class="payment-method-card"
                [class.selected]="method === selectedPaymentMethod"
                (click)="selectPaymentMethod(method)">
                <i class="icon-payment-{{method.toLowerCase()}}"></i> <span>{{ method === 'CREDIT_CARD' ? 'Kredi/Banka Kartı' : (method === 'BANK_TRANSFER' ? 'Havale/EFT' : method) }}</span>
-          </div>
-
-          <div *ngIf="selectedPaymentMethod === 'CREDIT_CARD'" class="stripe-card-element-container">
-              <h4>Kart Bilgileri</h4>
-              <ngx-stripe-card #stripeCard
-                  [options]="cardOptions"
-                  [elementsOptions]="elementsOptions">
-              </ngx-stripe-card>
-              <div *ngIf="stripeError" class="error-message stripe-error">
-                  {{ stripeError }}
-              </div>
           </div>
           <div *ngIf="selectedPaymentMethod === 'BANK_TRANSFER'" class="payment-info-placeholder">
             <p>Havale/EFT ile ödeme için hesap bilgileri sipariş sonrası gösterilecektir.</p>
@@ -153,10 +135,17 @@
           <div *ngIf="selectedPaymentMethod === 'PAYPAL'" class="payment-info-placeholder">
               <p>(PayPal butonu veya yönlendirme buraya gelecek)</p>
           </div>
+       </div> <div *ngIf="selectedPaymentMethod === 'CREDIT_CARD'" class="stripe-card-element-container">
+           <h4>Kart Bilgileri</h4>
+           <ngx-stripe-card #stripeCard
+               [options]="cardOptions"
+               [elementsOptions]="elementsOptions">
+           </ngx-stripe-card>
+           <div *ngIf="stripeError" class="error-message stripe-error">
+               {{ stripeError }}
+           </div>
        </div>
-  </section>
-
-  <section class="checkout-section order-summary-section">
+       </section> <section class="checkout-section order-summary-section">
     <h3>3. Sipariş Özeti</h3>
     <ng-container *ngIf="cart$ | async as cart; else cartLoadingOrError">
         <div *ngIf="cart && cart.items.length > 0" class="summary-details">
@@ -176,31 +165,28 @@
                 <span>Ücretsiz</span> </div>
              <div class="summary-row total">
                 <span>Genel Toplam</span>
-                <span>{{ cart.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span>
-             </div>
+                <span>{{ cart.totalPrice | currency:'TRY':'symbol':'1.2-2' }}</span> </div>
         </div>
          <div *ngIf="!cart || cart.items.length === 0">
              <p>Sepetiniz boş.</p>
-             </div>
+         </div>
     </ng-container>
     <ng-template #cartLoadingOrError>
         <app-loading-spinner></app-loading-spinner>
-        </ng-template>
-  </section>
-
-  <div *ngIf="orderError" class="error-message final-error">
+    </ng-template>
+  </section> <div *ngIf="orderError" class="error-message final-error">
       {{ orderError }}
   </div>
 
   <div class="checkout-actions">
     <button (click)="handlePlaceOrder()"
-    [disabled]="isPlacingOrder || !selectedPaymentMethod || !selectedAddressId || !(cart$ | async)?.items?.length">
-<span *ngIf="!isPlacingOrder">Siparişi Ver</span>
-<span *ngIf="isPlacingOrder">
-    Sipariş Veriliyor...
-    <app-loading-spinner style="display: inline-block; width: 20px; height: 20px; border-width: 3px; vertical-align: middle; margin-left: 5px;"></app-loading-spinner>
-    </span>
-</button>
+            [disabled]="isPlacingOrder || !selectedPaymentMethod || !selectedAddressId || !(cart$ | async)?.items?.length">
+        <span *ngIf="!isPlacingOrder">Siparişi Ver</span>
+        <span *ngIf="isPlacingOrder">
+            Sipariş Veriliyor...
+            <app-loading-spinner style="display: inline-block; width: 20px; height: 20px; border-width: 3px; vertical-align: middle; margin-left: 5px;"></app-loading-spinner>
+        </span>
+    </button>
   </div>
 
 </div>

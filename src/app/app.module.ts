@@ -13,6 +13,7 @@ import { BuyerModule } from './buyer/buyer.module';
 import { FeaturesModule } from './features/features.module';
 import { CoreModule } from "./core/core.module";
 import { HttpClientModule } from '@angular/common/http';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -38,7 +39,7 @@ import { HttpClientModule } from '@angular/common/http';
     FeaturesModule,
     CoreModule,
     HttpClientModule,
-    NgxStripeModule.forRoot('pk_test_YOUR_STRIPE_PUBLISHABLE_KEY') // Stripe Publishable Key'inizi buraya yazın
+    NgxStripeModule.forRoot(environment.stripePublishableKey) // Stripe Publishable Key'inizi buraya yazın
 ],
   providers: [
     provideClientHydration(withEventReplay())
