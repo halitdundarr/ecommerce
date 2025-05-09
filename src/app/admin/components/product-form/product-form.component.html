@@ -33,6 +33,25 @@
          </div>
     </div>
 
+    <div class="form-group">
+      <label for="productImage">Ürün Görseli</label>
+      <input type="file" id="productImage" (change)="onFileSelected($event)" accept="image/png, image/jpeg, image/gif">
+      <div *ngIf="imagePreviewUrl" class="image-preview">
+          <img [src]="imagePreviewUrl" alt="Seçilen Görsel Önizlemesi" height="100">
+      </div>
+      <small *ngIf="!isEditMode">Ürünü kaydettikten sonra daha fazla görsel ekleyebilirsiniz.</small>
+    </div>
+
+    <div *ngIf="imageUploadError" class="error-message">
+      {{ imageUploadError }}
+    </div>
+
+    <app-loading-spinner *ngIf="isLoading || isProductLoading || isUploadingImage"></app-loading-spinner>
+
+    <div *ngIf="apiError" class="error-message api-error"> {{ apiError }}
+   </div>
+
+
     <div class="form-row">
          <div class="form-group">
            <label for="price">Fiyat (TL)*</label>

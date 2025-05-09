@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { finalize, Observable, of } from 'rxjs';
 import { ProductService } from '../../../features/services/product.service';
 import { Category } from '../../../shared/models/category.model';
 import { Product } from '../../../shared/models/product.model';
+import { NotificationService } from '../../../core/services/notification.service';
 
 @Component({
   selector: 'app-product-form',
@@ -22,17 +23,27 @@ export class ProductFormComponent implements OnInit {
   isProductLoading = false; // Ürün verisi yükleniyor durumu
   error: string | null = null;
 
+
+
+  apiError: string | null = null; // API hatası için değişken ismi düzeltildi
+  selectedFile: File | null = null; // Seçilen dosyayı tutmak için
+  imagePreviewUrl: string | ArrayBuffer | null = null; // Önizleme URL'si
+  isUploadingImage = false; // Görsel yükleniyor durumu
+  imageUploadError: string | null = null; // Görsel yükleme hatası
+
+
   constructor(
     private fb: FormBuilder,
     private productService: ProductService,
     private router: Router,
-    private route: ActivatedRoute // ActivatedRoute inject edildi
+    private route: ActivatedRoute,
+    private notificationService: NotificationService
   ) { }
 
   ngOnInit(): void {
     this.initializeForm();
     this.loadCategories();
-    this.checkEditMode(); // Düzenleme modunu kontrol et
+    this.checkEditMode();
   }
 
   initializeForm(product?: Product): void { // Opsiyonel product parametresi eklendi
@@ -45,6 +56,27 @@ export class ProductFormComponent implements OnInit {
       categoryId: [product?.category?.id || null, Validators.required]
       // Diğer alanlar (isActive vb.) eklenebilir
     });
+  }
+
+  onFileSelected(event: Event): void {
+    const element = event.currentTarget as HTMLInputElement;
+    let fileList: FileList | null = element.files;
+
+    if (fileList && fileList.length > 0) {
+      this.selectedFile = fileList[0];
+      this.imageUploadError = null; // Önceki hatayı temizle
+
+      // Önizleme için FileReader kullan
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.imagePreviewUrl = reader.result;
+      };
+      reader.readAsDataURL(this.selectedFile);
+      console.log('File selected:', this.selectedFile.name);
+    } else {
+      this.selectedFile = null;
+      this.imagePreviewUrl = null;
+    }
   }
 
   loadCategories(): void {
@@ -88,54 +120,75 @@ export class ProductFormComponent implements OnInit {
   }
 
 
-  // Form gönderildiğinde
   onSubmit(): void {
-    if (this.productForm.invalid || this.isLoading) {
+    if (this.productForm.invalid || this.isLoading || this.isUploadingImage) { // isUploadingImage kontrolü eklendi
       this.productForm.markAllAsTouched();
       return;
     }
 
     this.isLoading = true;
-    this.error = null;
+    this.apiError = null; // API hatasını temizle
+    this.imageUploadError = null; // Görsel hatasını temizle
     const formData = this.productForm.value;
 
-    if (this.isEditMode && this.productIdToEdit !== null) {
-      // === DÜZENLEME MODU ===
-      this.productService.updateProduct(this.productIdToEdit, formData).subscribe({
-         next: (updatedProduct) => {
-           this.isLoading = false;
-           if (updatedProduct) {
-               console.log('Product updated successfully:', updatedProduct);
-               alert('Ürün başarıyla güncellendi!');
-               this.router.navigate(['/admin/products']); // Listeye geri dön
-           } else {
-                this.error = "Ürün güncellenemedi (servis hatası veya bulunamadı).";
-           }
-         },
-         error: (err) => {
-           this.isLoading = false;
-           this.error = "Ürün güncellenirken bir hata oluştu.";
-           console.error("Error updating product:", err);
-         }
-       });
+    const operation$ = this.isEditMode && this.productIdToEdit !== null
+      ? this.productService.updateProduct(this.productIdToEdit, formData)
+      : this.productService.addProduct(formData);
 
-    } else {
-      // === EKLEME MODU ===
-      this.productService.addProduct(formData).subscribe({
-        next: (newProduct) => {
-          this.isLoading = false;
-          console.log('Product added successfully:', newProduct);
-          alert('Ürün başarıyla eklendi!');
-          this.router.navigate(['/admin/products']); // Listeye geri dön
-        },
-        error: (err) => {
-          this.isLoading = false;
-          this.error = "Ürün eklenirken bir hata oluştu.";
-          console.error("Error adding product:", err);
+    operation$.subscribe({
+      next: (savedProduct) => {
+        // Ürün başarıyla kaydedildi/güncellendi
+        this.isLoading = false;
+        const productId = savedProduct?.id ?? this.productIdToEdit; // ID'yi al
+        const successMessage = this.isEditMode ? 'Ürün başarıyla güncellendi!' : 'Ürün başarıyla eklendi!';
+        this.notificationService.showSuccess(successMessage); // Bildirim göster
+
+        // --- Görsel Yükleme Mantığı ---
+        if (this.selectedFile && productId) {
+          this.uploadImage(productId, this.selectedFile); // Görseli yükle
+        } else {
+          // Görsel yoksa veya ürün ID alınamadıysa listeye dön
+           this.router.navigate(['/admin/products']);
         }
+        // --- ---
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.apiError = `Ürün ${this.isEditMode ? 'güncellenirken' : 'eklenirken'} bir hata oluştu: ${err.message || err}`;
+        console.error(`Error ${this.isEditMode ? 'updating' : 'adding'} product:`, err);
+        this.notificationService.showError(this.apiError); // Hata bildirimi
+      }
+    });
+  }
+
+
+    // --- YENİ: Görsel Yükleme Metodu ---
+    uploadImage(productId: string | number, file: File): void {
+      this.isUploadingImage = true;
+      this.imageUploadError = null;
+
+      // ProductService'e görsel yükleme metodu eklenmeli
+      this.productService.uploadProductImage(productId, file).pipe(
+          finalize(() => this.isUploadingImage = false)
+      ).subscribe({
+          next: (response) => {
+               console.log('Image uploaded successfully:', response);
+               this.notificationService.showSuccess('Görsel başarıyla yüklendi.');
+               // Yükleme başarılı olunca listeye dön
+               this.router.navigate(['/admin/products']);
+          },
+          error: (err) => {
+               console.error('Image upload failed:', err);
+               // Hata mesajını kullanıcıya göster (API'den gelmiyorsa genel mesaj)
+               this.imageUploadError = `Görsel yüklenemedi: ${err.message || 'Bilinmeyen bir hata oluştu.'}`;
+               this.notificationService.showError(this.imageUploadError);
+               // Kullanıcıya görseli tekrar deneme veya ürünü görselsiz kaydetme seçeneği sunulabilir
+               // Şimdilik sadece hata gösterip formda kalıyoruz. İsterse kullanıcı listeye dönebilir.
+               // Opsiyonel: Başarısız yükleme sonrası da listeye yönlendirebilirsiniz:
+               // this.router.navigate(['/admin/products']);
+          }
       });
     }
-  }
 
 
   // Kolay erişim için getter'lar (opsiyonel)

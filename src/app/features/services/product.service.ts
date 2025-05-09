@@ -1,7 +1,7 @@
 // src/app/features/services/product.service.ts
 
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpErrorResponse, HttpEvent, HttpRequest } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { map, delay, catchError, tap, finalize } from 'rxjs/operators'; // finalize ekle
 import { AuthService } from '../../core/services/auth.service';
@@ -55,6 +55,36 @@ export class ProductService {
   ) { }
 
 
+  uploadProductImage(productId: number | string, file: File, isPrimary: boolean = false): Observable<HttpEvent<any>> {
+    const formData: FormData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append('isPrimary', isPrimary.toString()); // isPrimary parametresini de gönder
+
+    let url: string;
+    const currentUserRole = this.authService.currentUserValue?.role;
+
+    if (currentUserRole === 'ADMIN') {
+      url = `<span class="math-inline">\{this\.ADMIN\_API\_URL\}/products/</span>{productId}/images`;
+    } else if (currentUserRole === 'SELLER') {
+      url = `<span class="math-inline">\{this\.SELLER\_API\_URL\}/products/</span>{productId}/images`;
+    } else {
+      console.error('Cannot upload image: User role is not Admin or Seller.');
+      return throwError(() => new Error('Image upload is not permitted for your role.'));
+    }
+
+    const req = new HttpRequest('POST', url, formData, {
+      reportProgress: true
+    });
+
+    console.log(`Uploading image for product ${productId} to ${url} (Role: ${currentUserRole})`);
+
+    return this.http.request(req).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+
+
   getCategories(): Observable<Category[]> {
     const url = this.CATEGORY_API_URL;
     console.log(`Workspaceing categories from: ${url}`);
@@ -68,31 +98,42 @@ export class ProductService {
     );
 }
 
-  getProducts(limit: number = 20, offset: number = 0, filters: ProductFilters = {}): Observable<ProductSummary[]> {
-    const page = Math.floor(offset / limit);
-    const size = limit;
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('size', size.toString());
+getProducts(limit: number = 20, offset: number = 0, filters: ProductFilters = {}): Observable<ProductSummary[]> {
+  const page = Math.floor(offset / limit);
+  const size = limit;
 
-    if (filters.categoryId !== undefined && filters.categoryId !== null) {
-         params = params.set('categoryId', filters.categoryId.toString());
-    }
-    if (filters.minPrice !== undefined && filters.minPrice !== null) {
-        params = params.set('minPrice', filters.minPrice.toString());
-    }
-     if (filters.maxPrice !== undefined && filters.maxPrice !== null) {
-        params = params.set('maxPrice', filters.maxPrice.toString());
-    }
+  // ---->> DEĞİŞİKLİK: URL'yi "/filter" endpoint'ine yönlendir <<----
+  const url = `${this.PRODUCT_API_URL}/filter`; // Her zaman filtre endpoint'ini kullan
 
-    const url = this.PRODUCT_API_URL;
-    console.log(`Workspaceing products from: ${url} with params:`, params.toString());
+  let params = new HttpParams()
+    .set('page', page.toString())
+    .set('size', size.toString());
 
-    return this.http.get<BackendPageResponse<BackendDtoProductSummary>>(url, { params }).pipe(
-      map(pageResponse => pageResponse.content.map(dtoSummary => this.mapDtoSummaryToProductSummary(dtoSummary))),
-      catchError(this.handleError)
-    );
+  // Filtreleri parametrelere ekle (Mevcut kod doğru görünüyor)
+  if (filters.categoryId !== undefined && filters.categoryId !== null) {
+       params = params.set('categoryId', filters.categoryId.toString());
   }
+  if (filters.minPrice !== undefined && filters.minPrice !== null) {
+      params = params.set('minPrice', filters.minPrice.toString());
+  }
+   if (filters.maxPrice !== undefined && filters.maxPrice !== null) {
+      params = params.set('maxPrice', filters.maxPrice.toString());
+  }
+   // Arama terimi için 'searchTerm' parametresi (filterProducts bunu kabul ediyor)
+   // Eğer ProductListComponent'ten searchTerm gelmiyorsa bu kısım etkisiz olur.
+   // Geliyorsa, filterProducts hem kategori hem arama yapabilir.
+   // if (filters.searchTerm) { // filters interface'ine searchTerm eklenmeli
+   //    params = params.set('searchTerm', filters.searchTerm);
+   // }
+
+  console.log(`Workspaceing products from (filter endpoint): ${url} with params:`, params.toString());
+
+  // Backend'den Page<DtoProductSummary> bekleniyor
+  return this.http.get<BackendPageResponse<BackendDtoProductSummary>>(url, { params }).pipe(
+    map(pageResponse => pageResponse.content.map(dtoSummary => this.mapDtoSummaryToProductSummary(dtoSummary))),
+    catchError(this.handleError)
+  );
+}
 
   getProductById(productId: number | string): Observable<Product | undefined> {
     const url = `${this.PRODUCT_API_URL}/${productId}`;
@@ -109,12 +150,25 @@ export class ProductService {
     );
   }
 
-  searchProducts(searchTerm: string): Observable<ProductSummary[]> {
-     const url = `${this.PRODUCT_API_URL}/search`;
-     let params = new HttpParams().set('q', searchTerm);
-     console.log(`Searching products from: ${url} with term: ${searchTerm}`);
-     console.warn(`ProductService: searchProducts needs a working backend endpoint at ${url}`);
-     return of([]); // Şimdilik boş
+  searchProducts(searchTerm: string, page: number = 0, size: number = 20): Observable<ProductSummary[]> {
+    const url = `${this.PRODUCT_API_URL}/search`; // Doğru endpoint
+    // Parametreleri oluştur: 'q' ve sayfalama
+    let params = new HttpParams()
+        .set('q', searchTerm)
+        .set('page', page.toString())
+        .set('size', size.toString());
+        // Gerekirse sort parametresi de eklenebilir .set('sort', 'name,asc')
+
+    console.log(`Searching products from: ${url} with params:`, params.toString());
+
+    // GERÇEK HTTP İSTEĞİ: Backend'den Page<DtoProductSummary> bekleniyor
+    return this.http.get<BackendPageResponse<BackendDtoProductSummary>>(url, { params }).pipe(
+        map(pageResponse => {
+            // Page yanıtının 'content' kısmını alıp ProductSummary[] listesine map et
+            return pageResponse.content.map(dtoSummary => this.mapDtoSummaryToProductSummary(dtoSummary));
+        }),
+        catchError(this.handleError) // Hata yönetimi
+    );
   }
   // --------------------------------------------------------------------------
 

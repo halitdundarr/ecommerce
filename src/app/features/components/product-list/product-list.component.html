@@ -93,8 +93,11 @@
                      </button>
                  </div>
 
-                <img [src]="product.imageUrl || 'https://via.placeholder.com/150?text=Resim+Yok'"
-                     [alt]="product.name">
+                 <a [routerLink]="['../detail', product.id]">
+                  <img [src]="product.imageUrl || 'https://via.placeholder.com/150?text=Resim+Yok'"
+                       [alt]="product.name"
+                       class="product-card-image"> </a>
+
                 <h3>
                   <a [routerLink]="['../detail', product.id]">{{ product.name }}</a>
                 </h3>

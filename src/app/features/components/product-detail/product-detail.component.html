@@ -12,19 +12,18 @@
 
       <div class="product-layout">
 
+
         <div class="product-gallery">
-          <img [src]="mainImageUrl || 'https://via.placeholder.com/450?text=Resim+Yok'"
-               [alt]="product?.name"
+          <img [src]="mainImageUrl || product.images?.[0]?.imageUrl || 'https://via.placeholder.com/450?text=Resim+Yok'"
+               [alt]="product.name"
                class="main-image">
-          <div class="thumbnails" *ngIf="product?.images as images">
-             <ng-container *ngIf="images && images.length > 1">
-                <img *ngFor="let img of images"
-                     [src]="img.imageUrl"
-                     [alt]="img.altText || product?.name"
-                     (click)="changeMainImage(img.imageUrl)">
-            </ng-container>
+          <div class="thumbnails" *ngIf="product.images && product.images.length > 1">
+            <img *ngFor="let img of product.images"
+                 [src]="img.imageUrl"
+                 [alt]="img.altText || product.name"
+                 (click)="changeMainImage(img.imageUrl)"
+                 [class.active-thumbnail]="img.imageUrl === mainImageUrl"> </div>
           </div>
-        </div>
 
         <div class="product-info">
           <h1>{{ product.name }}</h1>
