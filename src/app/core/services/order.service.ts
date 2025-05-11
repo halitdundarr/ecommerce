@@ -242,6 +242,8 @@ export class OrderService {
       );
   }
 
+
+
   /**
    * Bir siparişin durumunu günceller (Admin için).
    */
@@ -460,7 +462,7 @@ export class OrderService {
         );
     }
     getOrdersByUserIdForAdmin(userId: number | string): Observable<Order[]> {
-      const url = `${this.ADMIN_API_URL}/orders/user/${userId}`; // Örnek endpoint
+      const url = `${this.ORDER_API_URL}/customer/${userId}`;
       console.log(`Workspaceing orders for user ${userId} (Admin View) from: ${url}`);
       // Backend'den BackendDtoOrderResponse[] bekle
       return this.http.get<BackendDtoOrderResponse[]>(url).pipe(

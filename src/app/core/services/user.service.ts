@@ -52,7 +52,7 @@ interface DtoProfile {
 export class UserService {
 
   // API URL Sabitleri (environment'dan alınacak)
-  private readonly API_BASE_URL = environment.apiUrl; // <-- environment kullan
+  private readonly API_BASE_URL = environment.apiUrl;
   private readonly USER_API_URL = `${this.API_BASE_URL}/api/users`;
   private readonly ADMIN_USER_API_URL = `${this.API_BASE_URL}/api/admin/users`;
 
@@ -83,6 +83,7 @@ export class UserService {
       catchError(this.handleError)
     );
   }
+
 
   /**
    * Giriş yapmış kullanıcı için yeni bir adres ekler.

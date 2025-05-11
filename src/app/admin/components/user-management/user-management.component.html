@@ -29,6 +29,10 @@
                 </span>
               </td>
               <td class="actions">
+                <!-- Debug log -->
+                <div style="color: #666; font-size: 0.8em; margin-bottom: 5px;">
+                  User ID: {{user.id}}, Status: {{user.status}}, Action Loading: {{actionLoading[user.id]}}
+                </div>
                 <button *ngIf="user.status !== 'Banned' && user.role !== 'ADMIN'"
                         class="action-btn ban-btn"
                         (click)="banUser(user.id)"

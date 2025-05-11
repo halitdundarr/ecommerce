@@ -30,10 +30,24 @@ export class UserManagementComponent implements OnInit {
   }
 
   loadUsers(): void {
-    // ... (Bu metot aynı kalabilir)
-    this.isLoading = true; this.error = null;
+    this.isLoading = true;
+    this.error = null;
     this.users$ = this.userService.getAllUsers();
-    this.users$.subscribe({ /* ... */ });
+    this.users$.subscribe({
+      next: (users) => {
+        console.log('Loaded users:', users);
+        // Her kullanıcının durumunu kontrol et
+        users.forEach(user => {
+          console.log(`User ${user.id}: status=${user.status}, role=${user.role}`);
+        });
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading users:', err);
+        this.error = 'Kullanıcılar yüklenirken bir hata oluştu.';
+        this.isLoading = false;
+      }
+    });
   }
 
   banUser(userId: number): void {
